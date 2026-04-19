@@ -16,6 +16,9 @@ export const ZOOM_SPRING = {
   mass: 1,
 }
 
+// Canvas scale target for Level 2 (component expanded)
+export const ZOOM_COMPONENT_SCALE = 1.8
+
 export const STATE_STAGGER_MS = 60
 
 export const DIM_OPACITY = 0.4
