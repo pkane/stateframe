@@ -62,7 +62,9 @@ function CanvasInner() {
     if (zoomLevel === 'overview') setCanvasTransform(IDENTITY)
   }, [zoomLevel])
 
-  // Zoom into a cell — compute transform, update store, push history
+  const zoomOut = useCallback(() => dispatch({ type: 'ZOOM_OUT' }), [dispatch])
+
+  // Zoom into a cell — compute transform and update store
   const zoomToComponent = useCallback((variantId: string) => {
     const cellEl      = cellRefs.current.get(variantId)
     const containerEl = containerRef.current
@@ -70,23 +72,19 @@ function CanvasInner() {
 
     setCanvasTransform(centerCell(cellEl, containerEl, ZOOM_COMPONENT_SCALE, canvasTransformRef.current))
     dispatch({ type: 'ZOOM_TO_COMPONENT', variantId })
-    history.pushState({ zoomLevel: 'component', variantId }, '')
   }, [dispatch])
 
-  // Escape → history.back(); popstate → ZOOM_OUT
+  // Escape → ZOOM_OUT
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && canGoBack) history.back() }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && canGoBack) {
+        (document.activeElement as HTMLElement)?.blur()
+        zoomOut()
+      }
+    }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [canGoBack])
-
-  useEffect(() => {
-    const onPop = () => dispatch({ type: 'ZOOM_OUT' })
-    window.addEventListener('popstate', onPop)
-    return () => window.removeEventListener('popstate', onPop)
-  }, [dispatch])
-
-  useEffect(() => { history.replaceState({ zoomLevel: 'overview' }, '') }, [])
+  }, [canGoBack, zoomOut])
 
   // Breadcrumb labels
   const activeVariantLabel = activeVariant
@@ -100,8 +98,8 @@ function CanvasInner() {
     >
       <Breadcrumb
         variant={activeVariantLabel}
-        onNavigateHome={() => { if (canGoBack) history.back() }}
-        onNavigateVariant={() => { if (zoomLevel === 'state-detail') history.back() }}
+        onNavigateHome={() => { if (canGoBack) zoomOut() }}
+        onNavigateVariant={() => { if (zoomLevel === 'state-detail') zoomOut() }}
       />
 
       {/* ── Camera — the transformable canvas surface ── */}

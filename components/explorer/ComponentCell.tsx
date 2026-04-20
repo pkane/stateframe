@@ -35,23 +35,23 @@ export const ComponentCell = forwardRef<HTMLDivElement, ComponentCellProps>(
             className="absolute inset-0 rounded-full transition-transform duration-500 ease-out pointer-events-none"
           />
 
-          {/* Hover glow — wider radius, brighter, fades in */}
+          {/* Hover/focus glow — wider radius, brighter, fades in */}
           <div
-            className="absolute -inset-5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-out pointer-events-none"
+            className="absolute -inset-5 rounded-full opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-500 ease-out pointer-events-none"
             style={{ background: 'radial-gradient(circle, #ebebeb 0%, transparent 65%)', transform: 'scale(2)' }}
           />
 
           {/* Focus ring */}
-          <div className="absolute inset-4 rounded-full opacity-0 group-focus-visible:opacity-100 ring-2 ring-neutral-900 ring-offset-2 ring-offset-[#fafafa]" />
+          <div className="absolute inset-4 rounded-md opacity-0 group-focus-visible:opacity-100 ring-2 ring-neutral-400 ring-offset-2 ring-offset-[#fafafa]" />
 
-          {/* Component preview — pointer-events-none, frozen */}
-          <div className="relative pointer-events-none scale-[0.78] origin-center" aria-hidden>
+          {/* Component preview — inert prevents internal elements from receiving tab focus */}
+          <div className="relative pointer-events-none scale-[0.78] origin-center" aria-hidden inert>
             <Component {...props} />
           </div>
         </div>
 
         {/* Label */}
-        <span className="text-xs text-neutral-400 font-medium tracking-wide opacity-0 -translate-y-5 group-hover:opacity-100 group-hover:translate-y-0 group-hover:text-neutral-600 transition-all duration-300 ease-out">
+        <span className="text-xs text-neutral-400 font-medium tracking-wide opacity-0 -translate-y-5 group-hover:opacity-100 group-hover:translate-y-0 group-hover:text-neutral-600 group-focus-visible:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:text-neutral-600 transition-all duration-300 ease-out">
           {variant.label}
         </span>
       </motion.div>
