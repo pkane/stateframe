@@ -21,7 +21,7 @@ export const ComponentCell = forwardRef<HTMLDivElement, ComponentCellProps>(
       <motion.div
         ref={ref}
         role="button"
-        tabIndex={0}
+        tabIndex={targetOpacity >= 0.5 ? 0 : -1}
         onClick={onClick}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClick?.() }}
         className="group flex flex-col items-center gap-4 cursor-pointer outline-none w-fit"
