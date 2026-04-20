@@ -148,7 +148,7 @@ function CanvasInner() {
               <section key={group.id} aria-labelledby={`group-${group.id}`}>
                 <motion.h2
                   id={`group-${group.id}`}
-                  className={`${zoomLevel !== 'overview' && '!opacity-0'} mb-5 text-[11px] font-semibold uppercase tracking-widest text-neutral-400`}
+                  className={`${zoomLevel !== 'overview' && '!opacity-0'} mb-5 text-[14px] font-semibold uppercase tracking-widest text-neutral-400`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.45, ease: ENTRANCE_EASING }}
@@ -287,7 +287,7 @@ function CanvasInner() {
                 {/* Live indicator */}
                 <div className="absolute top-2.5 right-3.5 flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" aria-hidden />
-                  <span className="text-[10px] font-medium text-neutral-400">Live</span>
+                  <span className="text-xs font-medium text-neutral-400">Live</span>
                 </div>
 
                 {/* Live component — 2× scale, forced class as floor, real events layer on top */}

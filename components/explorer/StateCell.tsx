@@ -80,7 +80,7 @@ export function StateCell({ state, variant, index, isPinned, density, onPin, onU
         </div>
       </div>
 
-      <span className="text-[10px] text-neutral-400 font-medium tracking-wide">{state.label}</span>
+      <span className="text-xs text-neutral-400 font-medium tracking-wide">{state.label}</span>
     </motion.div>
   )
 }

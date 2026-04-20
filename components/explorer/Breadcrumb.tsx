@@ -26,7 +26,7 @@ export function Breadcrumb({ variant, state, onNavigateHome, onNavigateVariant }
 
   return (
     <nav
-      className="fixed top-6 z-50 w-full flex items-center justify-center gap-1.5 text-sm"
+      className="fixed top-6 z-50 w-full flex items-center gap-1.5 px-8 text-sm"
       aria-label="Explorer navigation"
     >
       <div className="relative inline-flex">
@@ -56,7 +56,7 @@ export function Breadcrumb({ variant, state, onNavigateHome, onNavigateVariant }
         <motion.button
           ref={buttonRef}
           onClick={onNavigateHome}
-          className="p-2 rounded-md font-semibold text-neutral-900 tracking-tight hover:text-neutral-600 outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
+          className="p-2 rounded-md font-semibold text-neutral-900 tracking-tight hover:text-neutral-600 outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2 cursor-pointer"
           initial={{ opacity: 0, x: -8 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.3, ease: ZOOM_EASING }}
@@ -70,7 +70,7 @@ export function Breadcrumb({ variant, state, onNavigateHome, onNavigateVariant }
           <span className="text-neutral-300" aria-hidden>/</span>
           <button
             onClick={onNavigateVariant}
-            className="text-neutral-500 hover:text-neutral-900 transition-colors outline-none focus-visible:underline"
+            className={`text-neutral-500 ${state && 'cursor-pointer hover:text-neutral-900'} transition-colors outline-none focus-visible:underline`}
           >
             {variant}
           </button>
