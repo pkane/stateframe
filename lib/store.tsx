@@ -22,6 +22,7 @@ type Action =
   | { type: 'ZOOM_TO_COMPONENT'; variantId: string }
   | { type: 'ZOOM_TO_STATE';     stateId: string }
   | { type: 'ZOOM_OUT' }
+  | { type: 'ZOOM_TO_OVERVIEW' }
   | { type: 'PIN_STATE';         pinned: PinnedState }
   | { type: 'UNPIN_STATE';       variantId: string; stateId: string }
   | { type: 'TOGGLE_HIDDEN';     stateId: string }
@@ -47,6 +48,15 @@ function reducer(state: AppState, action: Action): AppState {
         zoomLevel:   'state-detail',
         activeState: action.stateId,
         splitView:   false,
+      }
+
+    case 'ZOOM_TO_OVERVIEW':
+      return {
+        ...state,
+        zoomLevel:     'overview',
+        activeVariant: null,
+        activeState:   null,
+        splitView:     false,
       }
 
     case 'ZOOM_OUT': {

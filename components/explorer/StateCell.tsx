@@ -43,9 +43,9 @@ export function StateCell({ state, variant, index, isPinned, density, onPin, onU
     >
       <div
         className={cn(
-          'relative flex items-center justify-center rounded-xl bg-white ring-1 transition-all duration-200',
+          'relative flex items-center justify-center rounded-xl bg-white ring-1 transition-all duration-200 overflow-hidden',
           'ring-neutral-200 group-hover:ring-neutral-400 group-focus-visible:ring-2 group-focus-visible:ring-neutral-900',
-          isCompact ? 'w-30 h-20' : 'w-36 h-24',
+          isCompact ? 'w-36 h-20' : 'w-42 h-24',
         )}
       >
         {/* Category dot */}

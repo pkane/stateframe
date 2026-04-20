@@ -6,10 +6,13 @@ import { componentRegistry } from '@/lib/registry'
 import { ENTRANCE_EASING, ZOOM_EASING, ZOOM_SPRING, ZOOM_COMPONENT_SCALE } from '@/lib/constants'
 import { AppProvider, useAppState, useAppDispatch } from '@/lib/store'
 
+import { cn } from '@/lib/utils'
+
 import { Breadcrumb } from './Breadcrumb'
 import { ComponentCell } from './ComponentCell'
 import { StateCell } from './StateCell'
 import { StateToolbar } from './StateToolbar'
+import { CodeDrawer } from './CodeDrawer'
 
 // ─── Transform helpers ────────────────────────────────────────────────────────
 
@@ -47,7 +50,7 @@ function centerCell(
 // ─── Inner canvas ─────────────────────────────────────────────────────────────
 
 function CanvasInner() {
-  const { zoomLevel, activeVariant, splitView, hiddenStates, pinnedStates } = useAppState()
+  const { zoomLevel, activeVariant, activeState, splitView, hiddenStates, pinnedStates } = useAppState()
   const dispatch = useAppDispatch()
 
   const containerRef = useRef<HTMLDivElement>(null)
@@ -111,6 +114,9 @@ function CanvasInner() {
   const activeGroupId = activeVariant
     ? componentRegistry.find(g => g.variants.some(v => v.id === activeVariant))?.id ?? null
     : null
+  const activeStateData = activeState && activeVariantData
+    ? activeVariantData.states.find(s => s.id === activeState) ?? null
+    : null
 
   return (
     <div
@@ -119,7 +125,10 @@ function CanvasInner() {
     >
       <Breadcrumb
         variant={activeVariantLabel}
-        onNavigateHome={() => { if (canGoBack) zoomOut() }}
+        state={activeStateData?.label ?? null}
+        onNavigateHome={() => {
+          if (canGoBack) dispatch({ type: 'ZOOM_TO_OVERVIEW' })
+        }}
         onNavigateVariant={() => { if (zoomLevel === 'state-detail') zoomOut() }}
       />
 
@@ -249,6 +258,48 @@ function CanvasInner() {
             onToggleDensity={() => setDensity(d => d === 'comfortable' ? 'compact' : 'comfortable')}
           />
         )}
+      </AnimatePresence>
+
+      {/* ── Level 3: state detail overlay ── */}
+      <AnimatePresence>
+        {zoomLevel === 'state-detail' && activeVariantData && activeStateData && (() => {
+          const Component = activeVariantData.component
+          const props = activeVariantData.defaultProps ?? {}
+          const categoryColor: Record<string, string> = {
+            interactive: 'bg-blue-400',
+            validation:  'bg-red-400',
+            disabled:    'bg-neutral-300',
+            loading:     'bg-amber-400',
+          }
+          return (
+            <motion.div
+              key="state-detail"
+              className="fixed inset-0 z-30 flex flex-col items-center justify-center bg-[#fafafa]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2, ease: ZOOM_EASING }}
+            >
+              <div className="relative flex items-center justify-center rounded-2xl bg-white ring-1 ring-neutral-200 w-[85vw] h-[75vh]">
+                {/* Category dot */}
+                <div className={cn('absolute top-3 left-3.5 w-1.5 h-1.5 rounded-full', categoryColor[activeStateData.category])} />
+
+                {/* Live indicator */}
+                <div className="absolute top-2.5 right-3.5 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" aria-hidden />
+                  <span className="text-[10px] font-medium text-neutral-400">Live</span>
+                </div>
+
+                {/* Live component — 2× scale, forced class as floor, real events layer on top */}
+                <div className="scale-[2] origin-center">
+                  <Component {...props} className={activeStateData.forcedClassName} />
+                </div>
+              </div>
+
+              <CodeDrawer variant={activeVariantData} state={activeStateData} />
+            </motion.div>
+          )
+        })()}
       </AnimatePresence>
     </div>
   )

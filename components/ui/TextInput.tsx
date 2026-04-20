@@ -32,11 +32,12 @@ export function TextInput({
         placeholder={placeholder}
         defaultValue={displayValue}
         disabled={isDisabled}
-        readOnly
         className={cn(
-          'h-9 rounded-md border px-3 text-sm bg-white text-neutral-900 outline-none transition-none',
+          'h-9 rounded-md border px-3 text-sm bg-white text-neutral-900 outline-none transition-colors duration-150',
           'placeholder:text-neutral-400',
           isError   ? 'border-red-500' : 'border-neutral-300',
+          !isError && 'hover:border-neutral-400 focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/10',
+          isError  && 'focus:ring-2 focus:ring-red-500/20',
           isFocused && !isError && 'border-neutral-900 ring-2 ring-neutral-900/10',
           isFocused && isError  && 'ring-2 ring-red-500/20',
         )}

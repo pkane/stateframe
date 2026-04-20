@@ -30,7 +30,6 @@ export function Breadcrumb({ variant, state, onNavigateHome, onNavigateVariant }
       aria-label="Explorer navigation"
     >
       <div className="relative inline-flex">
-        {/* SVG stroke overlay — draws in via pathLength */}
         {size && (
           <svg
             width={size.w}

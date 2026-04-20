@@ -92,6 +92,7 @@ export const componentRegistry: ComponentGroup[] = [
           { id: 'input-checkbox-unchecked',     label: 'Unchecked',     category: 'interactive', forcedClassName: '' },
           { id: 'input-checkbox-checked',       label: 'Checked',       category: 'interactive', forcedClassName: 'is-checked' },
           { id: 'input-checkbox-indeterminate', label: 'Indeterminate', category: 'interactive', forcedClassName: 'is-indeterminate' },
+          { id: 'input-checkbox-focus',         label: 'Focus',         category: 'interactive', forcedClassName: 'is-focused' },
           { id: 'input-checkbox-disabled',      label: 'Disabled',      category: 'disabled',    forcedClassName: 'is-disabled' },
         ],
       },
