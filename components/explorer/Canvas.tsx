@@ -1,12 +1,15 @@
 'use client'
 
 import { useEffect, useCallback, useRef, useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { componentRegistry } from '@/lib/registry'
-import { ENTRANCE_EASING, ZOOM_SPRING, ZOOM_COMPONENT_SCALE } from '@/lib/constants'
+import { ENTRANCE_EASING, ZOOM_EASING, ZOOM_SPRING, ZOOM_COMPONENT_SCALE } from '@/lib/constants'
 import { AppProvider, useAppState, useAppDispatch } from '@/lib/store'
+
 import { Breadcrumb } from './Breadcrumb'
 import { ComponentCell } from './ComponentCell'
+import { StateCell } from './StateCell'
+import { StateToolbar } from './StateToolbar'
 
 // ─── Transform helpers ────────────────────────────────────────────────────────
 
@@ -44,7 +47,7 @@ function centerCell(
 // ─── Inner canvas ─────────────────────────────────────────────────────────────
 
 function CanvasInner() {
-  const { zoomLevel, activeVariant, splitView } = useAppState()
+  const { zoomLevel, activeVariant, splitView, hiddenStates, pinnedStates } = useAppState()
   const dispatch = useAppDispatch()
 
   const containerRef = useRef<HTMLDivElement>(null)
@@ -55,6 +58,10 @@ function CanvasInner() {
   // Keep ref in sync so callbacks always read the latest value without re-creating
   canvasTransformRef.current = canvasTransform
 
+  const [density, setDensity]               = useState<'compact' | 'comfortable'>('comfortable')
+
+  const [activeCellNaturalPos, setActiveCellNaturalPos] = useState<{ cx: number; cy: number } | null>(null)
+
   const canGoBack = zoomLevel !== 'overview' || splitView
 
   // Reset camera when returning to overview
@@ -64,13 +71,23 @@ function CanvasInner() {
 
   const zoomOut = useCallback(() => dispatch({ type: 'ZOOM_OUT' }), [dispatch])
 
-  // Zoom into a cell — compute transform and update store
+  // Zoom into a cell — compute transform, store natural pos for state grid anchoring
   const zoomToComponent = useCallback((variantId: string) => {
     const cellEl      = cellRefs.current.get(variantId)
     const containerEl = containerRef.current
     if (!cellEl || !containerEl) return
 
-    setCanvasTransform(centerCell(cellEl, containerEl, ZOOM_COMPONENT_SCALE, canvasTransformRef.current))
+    const current   = canvasTransformRef.current
+    const cell      = cellEl.getBoundingClientRect()
+    const container = containerEl.getBoundingClientRect()
+
+    const visualCx = cell.left - container.left + cell.width  / 2
+    const visualCy = cell.top  - container.top  + cell.height / 2
+    const naturalCx = (visualCx - current.x) / current.scale
+    const naturalCy = (visualCy - current.y) / current.scale
+
+    setActiveCellNaturalPos({ cx: naturalCx, cy: naturalCy })
+    setCanvasTransform(centerCell(cellEl, containerEl, ZOOM_COMPONENT_SCALE, current))
     dispatch({ type: 'ZOOM_TO_COMPONENT', variantId })
   }, [dispatch])
 
@@ -86,9 +103,13 @@ function CanvasInner() {
     return () => window.removeEventListener('keydown', onKey)
   }, [canGoBack, zoomOut])
 
-  // Breadcrumb labels
-  const activeVariantLabel = activeVariant
-    ? componentRegistry.flatMap(g => g.variants).find(v => v.id === activeVariant)?.label ?? null
+  // Active variant lookups
+  const activeVariantData = activeVariant
+    ? componentRegistry.flatMap(g => g.variants).find(v => v.id === activeVariant) ?? null
+    : null
+  const activeVariantLabel = activeVariantData?.label ?? null
+  const activeGroupId = activeVariant
+    ? componentRegistry.find(g => g.variants.some(v => v.id === activeVariant))?.id ?? null
     : null
 
   return (
@@ -118,7 +139,7 @@ function CanvasInner() {
               <section key={group.id} aria-labelledby={`group-${group.id}`}>
                 <motion.h2
                   id={`group-${group.id}`}
-                  className="mb-5 text-[11px] font-semibold uppercase tracking-widest text-neutral-400"
+                  className={`${zoomLevel !== 'overview' && '!opacity-0'} mb-5 text-[11px] font-semibold uppercase tracking-widest text-neutral-400`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.45, ease: ENTRANCE_EASING }}
@@ -127,15 +148,36 @@ function CanvasInner() {
                 </motion.h2>
 
                 <div className="flex flex-wrap gap-4">
-                  {group.variants.map((variant, variantIndex) => (
+                  {group.variants.map((variant, variantIndex) => {
+                    const isActive       = zoomLevel === 'component' && variant.id === activeVariant
+                    const isActiveGroup  = zoomLevel === 'component' && group.id === activeGroupId
+                    const activeIdxInGrp = isActiveGroup
+                      ? group.variants.findIndex(v => v.id === activeVariant)
+                      : -1
+
+                    const targetOpacity =
+                      zoomLevel !== 'component' ? 1 :
+                      isActive ? 0 :
+                      isActiveGroup ? 0.5 :
+                      0.125
+
+                    const baseShift = Math.round(30 / ZOOM_COMPONENT_SCALE)
+                    const distance  = Math.abs(variantIndex - activeIdxInGrp)
+                    const translateX =
+                      isActiveGroup && !isActive
+                        ? baseShift * distance * (variantIndex < activeIdxInGrp ? -1 : 1)
+                        : 0
+
+                    const entranceDelay = 0.5 + groupIndex * 0.3 + variantIndex * 0.15
+
+                    return (
                     <motion.div
                       key={variant.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
+                      initial={{ opacity: 0, y: 10, x: 0 }}
+                      animate={{ opacity: 1, y: 0, x: translateX }}
                       transition={{
-                        duration: 0.45,
-                        ease: ENTRANCE_EASING,
-                        delay: 0.5 + groupIndex * 0.3 + variantIndex * 0.15,
+                        default: { duration: 0.45, ease: ENTRANCE_EASING, delay: entranceDelay },
+                        x: { duration: zoomLevel === 'component' ? 1 : 0.35, ease: ZOOM_EASING, delay: 0 },
                       }}
                     >
                       <ComponentCell
@@ -144,19 +186,70 @@ function CanvasInner() {
                           else cellRefs.current.delete(variant.id)
                         }}
                         variant={variant}
-                        isDimmed={zoomLevel !== 'overview' && variant.id !== activeVariant}
+                        targetOpacity={targetOpacity}
+                        zoomLevel={zoomLevel}
                         onClick={() => zoomToComponent(variant.id)}
                       />
                     </motion.div>
-                  ))}
+                  )})}
                 </div>
               </section>
             ))}
           </div>
         </main>
 
-        {/* Level 2 and 3 slots — added in steps 7 & 8 */}
+        {/* ── Level 2: state grid, anchored below the active cell ── */}
+        {zoomLevel === 'component' && activeVariantData && activeCellNaturalPos && (() => {
+          const visibleStates = activeVariantData.states.filter(s => !hiddenStates.includes(s.id))
+          return (
+            <div
+              style={{
+                position: 'absolute',
+                top:  activeCellNaturalPos.cy,
+                left: activeCellNaturalPos.cx,
+                transform: 'translate(-50%, -50%)',
+              }}
+            >
+              <AnimatePresence mode="popLayout">
+                <div className="flex flex-wrap justify-center gap-3 max-w-[400px]">
+                  {visibleStates.map(state => {
+                    const originalIndex = activeVariantData.states.findIndex(s => s.id === state.id)
+                    return (
+                      <StateCell
+                        key={state.id}
+                        state={state}
+                        variant={activeVariantData}
+                        index={originalIndex}
+                        isPinned={pinnedStates.some(p => p.variantId === activeVariant && p.stateId === state.id)}
+                        density={density}
+                        onPin={() => dispatch({ type: 'PIN_STATE', pinned: { variantId: activeVariant!, stateId: state.id, variantLabel: activeVariantData.label, stateLabel: state.label } })}
+                        onUnpin={() => dispatch({ type: 'UNPIN_STATE', variantId: activeVariant!, stateId: state.id })}
+                        onClick={() => dispatch({ type: 'ZOOM_TO_STATE', stateId: state.id })}
+                      />
+                    )
+                  })}
+                </div>
+              </AnimatePresence>
+            </div>
+          )
+        })()}
+
+        {/* Level 3 slot — added in step 8 */}
       </motion.div>
+
+      {/* ── Level 2 toolbar — fixed in viewport space ── */}
+      <AnimatePresence>
+        {zoomLevel === 'component' && activeVariantData && (
+          <StateToolbar
+            key="state-toolbar"
+            states={activeVariantData.states}
+            hiddenStates={hiddenStates}
+            density={density}
+            onToggleHidden={(stateId) => dispatch({ type: 'TOGGLE_HIDDEN', stateId })}
+            onToggleDensity={() => setDensity(d => d === 'comfortable' ? 'compact' : 'comfortable')}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

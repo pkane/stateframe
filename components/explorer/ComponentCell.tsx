@@ -3,19 +3,20 @@
 import { forwardRef } from 'react'
 import { motion } from 'framer-motion'
 import type { ComponentVariant } from '@/lib/types'
-import { DIM_OPACITY } from '@/lib/constants'
+
 
 type ComponentCellProps = {
   variant: ComponentVariant
   onClick?: () => void
-  isDimmed?: boolean
+  targetOpacity?: number
+  zoomLevel?: 'overview' | 'component' | 'state-detail'
 }
 
 export const ComponentCell = forwardRef<HTMLDivElement, ComponentCellProps>(
-  function ComponentCell({ variant, onClick, isDimmed = false }, ref) {
+  function ComponentCell({ variant, onClick, targetOpacity = 1, zoomLevel }, ref) {
     const Component = variant.component
     const props = variant.defaultProps ?? {}
-
+    const hoverTranslateClass = zoomLevel === 'overview' ? 'group-hover:translate-y-0' : 'group-hover:-translate-y-[30px]'
     return (
       <motion.div
         ref={ref}
@@ -25,8 +26,9 @@ export const ComponentCell = forwardRef<HTMLDivElement, ComponentCellProps>(
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClick?.() }}
         className="group flex flex-col items-center gap-4 cursor-pointer outline-none w-fit"
         aria-label={`Explore ${variant.label} states`}
-        animate={{ opacity: isDimmed ? DIM_OPACITY : 1 }}
-        transition={{ duration: 0.4, delay: isDimmed ? 0.05 : 0 }}
+        animate={{ opacity: targetOpacity }}
+        whileHover={targetOpacity > 0 && targetOpacity < 1 ? { opacity: 1 } : undefined}
+        transition={{ opacity: { duration: 0.4 } }}
       >
         {/* Glow circle */}
         <div className="relative flex w-52 h-32 items-center justify-center">
@@ -51,7 +53,7 @@ export const ComponentCell = forwardRef<HTMLDivElement, ComponentCellProps>(
         </div>
 
         {/* Label */}
-        <span className="text-xs text-neutral-400 font-medium tracking-wide opacity-0 -translate-y-5 group-hover:opacity-100 group-hover:translate-y-0 group-hover:text-neutral-600 group-focus-visible:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:text-neutral-600 transition-all duration-300 ease-out">
+        <span className={`text-xs text-neutral-400 font-medium tracking-wide opacity-0 -translate-y-5 group-hover:opacity-100 ${hoverTranslateClass} group-hover:text-neutral-600 group-focus-visible:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:text-neutral-600 transition-all duration-300 ease-out`}>
           {variant.label}
         </span>
       </motion.div>
