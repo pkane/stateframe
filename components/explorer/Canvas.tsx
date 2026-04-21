@@ -245,6 +245,16 @@ function CanvasInner() {
     return () => window.removeEventListener('resize', update)
   }, [])
 
+  useEffect(() => {
+    const onResizeZoomOut = () => {
+      if (zoomLevel !== 'overview') {
+        dispatch({ type: 'ZOOM_TO_OVERVIEW' })
+      }
+    }
+    window.addEventListener('resize', onResizeZoomOut)
+    return () => window.removeEventListener('resize', onResizeZoomOut)
+  }, [zoomLevel, dispatch])
+
   const [activeCellNaturalPos, setActiveCellNaturalPos] = useState<{ cx: number; cy: number } | null>(null)
 
   const canGoBack = zoomLevel !== 'overview' || splitView
@@ -433,9 +443,7 @@ function CanvasInner() {
 
                     const targetOpacity =
                       zoomLevel !== 'component' ? 1 :
-                      isActive ? 0 :
-                      isActiveGroup ? 0.5 :
-                      0.125
+                      isActive ? 0 : 0.5
 
                     const baseShift = Math.round(30 / zoomScale)
                     const distance  = Math.abs(variantIndex - activeIdxInGrp)
@@ -449,10 +457,10 @@ function CanvasInner() {
                     return (
                     <motion.div
                       key={variant.id}
-                      initial={{ opacity: 0, y: 10, x: 0 }}
-                      animate={{ opacity: 1, y: 0, x: translateX }}
+                      initial={{ y: 10, x: 0 }}
+                      animate={{ y: 0, x: translateX }}
                       transition={{
-                        default: { duration: 0.45, ease: ENTRANCE_EASING, delay: entranceDelay },
+                        y: { duration: 0.45, ease: ENTRANCE_EASING, delay: entranceDelay },
                         x: { duration: zoomLevel === 'component' ? 1 : 0.35, ease: ZOOM_EASING, delay: 0 },
                       }}
                     >
@@ -464,6 +472,7 @@ function CanvasInner() {
                         variant={variant}
                         targetOpacity={targetOpacity}
                         zoomLevel={zoomLevel}
+                        entranceDelay={entranceDelay}
                         onClick={() => zoomToComponent(variant.id)}
                       />
                     </motion.div>
@@ -527,7 +536,7 @@ function CanvasInner() {
       <AnimatePresence>
         {zoomLevel !== 'overview' && (
           <motion.ul
-            className="fixed top-[68px] left-8 z-50 flex flex-col gap-1 list-none"
+            className="fixed invisible lg:visible top-[68px] left-8 z-50 flex flex-col gap-1 list-none"
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}

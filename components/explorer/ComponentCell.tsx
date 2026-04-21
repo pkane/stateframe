@@ -1,6 +1,6 @@
 'use client'
 
-import { forwardRef } from 'react'
+import { forwardRef, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import type { ComponentVariant } from '@/lib/types'
 
@@ -10,12 +10,17 @@ type ComponentCellProps = {
   onClick?: () => void
   targetOpacity?: number
   zoomLevel?: 'overview' | 'component' | 'state-detail'
+  entranceDelay?: number
 }
 
 export const ComponentCell = forwardRef<HTMLDivElement, ComponentCellProps>(
-  function ComponentCell({ variant, onClick, targetOpacity = 1, zoomLevel }, ref) {
+  function ComponentCell({ variant, onClick, targetOpacity = 1, zoomLevel, entranceDelay = 0 }, ref) {
     const Component = variant.component
     const props = variant.defaultProps ?? {}
+
+    const hasEntered = useRef(false)
+    useEffect(() => { hasEntered.current = true }, [])
+
     const hoverTranslateClass = zoomLevel === 'overview' ? 'lg:group-hover:-translate-y-5' : 'lg:group-hover:-translate-y-[30px]'
     return (
       <motion.div
@@ -26,9 +31,10 @@ export const ComponentCell = forwardRef<HTMLDivElement, ComponentCellProps>(
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClick?.() }}
         className="group flex flex-col items-center gap-4 cursor-pointer outline-none w-fit"
         aria-label={`Explore ${variant.label} states`}
+        initial={{ opacity: 0 }}
         animate={{ opacity: targetOpacity }}
         whileHover={targetOpacity > 0 && targetOpacity < 1 ? { opacity: 1 } : undefined}
-        transition={{ opacity: { duration: 0.4 } }}
+        transition={{ opacity: { duration: 0.4, delay: hasEntered.current ? 0 : entranceDelay } }}
       >
         <div className="relative flex w-36 md:w-52 h-32 items-center justify-center">
           <div

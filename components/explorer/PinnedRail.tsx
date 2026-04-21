@@ -22,7 +22,7 @@ export function PinnedRail({ pinnedStates, zoomLevel, splitView, splitViewIndex,
     <AnimatePresence>
       {pinnedStates.length > 0 && zoomLevel !== 'overview' && (
         <motion.div
-          className="fixed top-[18px] right-8 z-50 flex items-center gap-2.5"
+          className="fixed top-[80px] md:top-[18px] right-8 z-50 flex items-center gap-2.5"
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -6 }}
@@ -63,7 +63,7 @@ export function PinnedRail({ pinnedStates, zoomLevel, splitView, splitViewIndex,
                 >
                   <div
                     className={cn(
-                      'relative w-14 h-9 rounded-md bg-white overflow-hidden transition-all duration-150',
+                      'relative w-14 h-9 md:w-24 h-14 rounded-md bg-white overflow-hidden transition-all duration-150',
                       isActive
                         ? 'ring-2 ring-neutral-900 shadow-sm'
                         : canActivate
