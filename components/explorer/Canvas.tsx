@@ -108,15 +108,32 @@ function CanvasInner() {
   const { zoomLevel, activeVariant, activeState, splitView, hiddenStates, pinnedStates } = useAppState()
   const dispatch = useAppDispatch()
 
-  const containerRef = useRef<HTMLDivElement>(null)
-  const cellRefs     = useRef<Map<string, HTMLDivElement>>(new Map())
+  const containerRef    = useRef<HTMLDivElement>(null)
+  const cellRefs        = useRef<Map<string, HTMLDivElement>>(new Map())
+  const groupScrollRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
   const [canvasTransform, setCanvasTransform] = useState<CanvasTransform>(IDENTITY)
   const canvasTransformRef = useRef<CanvasTransform>(IDENTITY)
   // Keep ref in sync so callbacks always read the latest value without re-creating
   canvasTransformRef.current = canvasTransform
 
-  const [density, setDensity]               = useState<'compact' | 'comfortable'>('comfortable')
+  const [density, setDensity] = useState<'compact' | 'comfortable'>('compact')
+
+  // Responsive zoom scale: desktop 1.8 → tablet 1.6 → phone 1.4
+  const [zoomScale, setZoomScale] = useState(ZOOM_COMPONENT_SCALE)
+  const [viewportWidth, setViewportWidth] = useState(1440)
+  useEffect(() => {
+    const update = () => {
+      const w = window.innerWidth
+      setViewportWidth(w)
+      if (w < 768)       setZoomScale(1.4)
+      else if (w < 1024) setZoomScale(1.6)
+      else               setZoomScale(ZOOM_COMPONENT_SCALE)
+    }
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
 
   const [activeCellNaturalPos, setActiveCellNaturalPos] = useState<{ cx: number; cy: number } | null>(null)
 
@@ -128,6 +145,12 @@ function CanvasInner() {
   }, [zoomLevel])
 
   const zoomOut = useCallback(() => dispatch({ type: 'ZOOM_OUT' }), [dispatch])
+
+  const scrollGroup = useCallback((groupId: string, direction: 'left' | 'right') => {
+    const el = groupScrollRefs.current.get(groupId)
+    if (!el) return
+    el.scrollBy({ left: direction === 'right' ? 240 : -240, behavior: 'smooth' })
+  }, [])
 
   // Zoom into a cell — compute transform, store natural pos for state grid anchoring
   const zoomToComponent = useCallback((variantId: string) => {
@@ -145,9 +168,9 @@ function CanvasInner() {
     const naturalCy = (visualCy - current.y) / current.scale
 
     setActiveCellNaturalPos({ cx: naturalCx, cy: naturalCy })
-    setCanvasTransform(centerCell(cellEl, containerEl, ZOOM_COMPONENT_SCALE, current))
+    setCanvasTransform(centerCell(cellEl, containerEl, zoomScale, current))
     dispatch({ type: 'ZOOM_TO_COMPONENT', variantId })
-  }, [dispatch])
+  }, [dispatch, zoomScale])
 
   // Escape → ZOOM_OUT
   useEffect(() => {
@@ -176,7 +199,7 @@ function CanvasInner() {
   return (
     <div
       ref={containerRef}
-      className="relative h-full w-full overflow-hidden bg-[#fafafa]"
+      className={cn('relative h-full w-full overflow-x-hidden bg-[#fafafa]', zoomLevel !== 'overview' && 'overflow-y-hidden' )}
     >
       <Breadcrumb
         variant={activeVariantLabel}
@@ -194,24 +217,51 @@ function CanvasInner() {
         transition={ZOOM_SPRING}
       >
         <main
-          className="mx-auto max-w-5xl px-10 pt-24 pb-20"
+          className="mx-auto max-w-5xl pl-10 pt-24 pb-20"
           role="main"
           aria-label="Component overview"
         >
           <div className="flex flex-col gap-16">
             {componentRegistry.map((group, groupIndex) => (
               <section key={group.id} aria-labelledby={`group-${group.id}`}>
-                <motion.h2
-                  id={`group-${group.id}`}
-                  className={`${zoomLevel !== 'overview' && '!opacity-0'} mb-5 text-[14px] font-semibold uppercase tracking-widest text-neutral-400`}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.45, ease: ENTRANCE_EASING }}
-                >
-                  {group.label}
-                </motion.h2>
+                <div className="flex items-center justify-between mb-5">
+                  <motion.h2
+                    id={`group-${group.id}`}
+                    className={`${zoomLevel !== 'overview' && '!opacity-0'} text-[14px] font-semibold uppercase tracking-widest text-neutral-400`}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.45, ease: ENTRANCE_EASING }}
+                  >
+                    {group.label}
+                  </motion.h2>
 
-                <div className="flex flex-wrap gap-4">
+                  <div className={cn('flex gap-0.5 transition-opacity duration-300', zoomLevel !== 'overview' && 'opacity-0 pointer-events-none')}>
+                    {(['left', 'right'] as const).map((dir) => (
+                      <button
+                        key={dir}
+                        onClick={() => scrollGroup(group.id, dir)}
+                        tabIndex={zoomLevel === 'overview' ? 0 : -1}
+                        className="p-1.5 rounded-md text-neutral-300 hover:text-neutral-600 transition-colors duration-150"
+                        aria-label={`Scroll ${group.label} ${dir}`}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                          {dir === 'left'
+                            ? <polyline points="15 18 9 12 15 6" />
+                            : <polyline points="9 18 15 12 9 6" />
+                          }
+                        </svg>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div
+                  ref={(el) => {
+                    if (el) groupScrollRefs.current.set(group.id, el)
+                    else groupScrollRefs.current.delete(group.id)
+                  }}
+                  className="flex gap-4 overflow-x-auto overflow-y-hidden [&::-webkit-scrollbar]:hidden"
+                >
                   {group.variants.map((variant, variantIndex) => {
                     const isActive       = zoomLevel === 'component' && variant.id === activeVariant
                     const isActiveGroup  = zoomLevel === 'component' && group.id === activeGroupId
@@ -225,7 +275,7 @@ function CanvasInner() {
                       isActiveGroup ? 0.5 :
                       0.125
 
-                    const baseShift = Math.round(30 / ZOOM_COMPONENT_SCALE)
+                    const baseShift = Math.round(30 / zoomScale)
                     const distance  = Math.abs(variantIndex - activeIdxInGrp)
                     const translateX =
                       isActiveGroup && !isActive
@@ -275,7 +325,16 @@ function CanvasInner() {
               }}
             >
               <AnimatePresence mode="popLayout">
-                <div className="flex flex-wrap justify-center gap-3 max-w-[400px]">
+                <div
+                  className="flex flex-wrap justify-center gap-3"
+                  style={{
+                    width: viewportWidth < 768
+                      ? Math.round(viewportWidth * 0.85 / zoomScale)
+                      : viewportWidth < 1024
+                      ? Math.round(viewportWidth * 0.75 / zoomScale)
+                      : 400,
+                  }}
+                >
                   {visibleStates.map(state => {
                     const originalIndex = activeVariantData.states.findIndex(s => s.id === state.id)
                     return (

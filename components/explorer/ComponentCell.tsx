@@ -16,7 +16,7 @@ export const ComponentCell = forwardRef<HTMLDivElement, ComponentCellProps>(
   function ComponentCell({ variant, onClick, targetOpacity = 1, zoomLevel }, ref) {
     const Component = variant.component
     const props = variant.defaultProps ?? {}
-    const hoverTranslateClass = zoomLevel === 'overview' ? 'group-hover:translate-y-0' : 'group-hover:-translate-y-[30px]'
+    const hoverTranslateClass = zoomLevel === 'overview' ? 'lg:group-hover:-translate-y-5' : 'lg:group-hover:-translate-y-[30px]'
     return (
       <motion.div
         ref={ref}
@@ -53,7 +53,7 @@ export const ComponentCell = forwardRef<HTMLDivElement, ComponentCellProps>(
         </div>
 
         {/* Label */}
-        <span className={`text-xs text-neutral-400 font-medium tracking-wide opacity-0 -translate-y-5 group-hover:opacity-100 ${hoverTranslateClass} group-hover:text-neutral-600 group-focus-visible:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:text-neutral-600 transition-all duration-300 ease-out`}>
+        <span className={`text-xs text-neutral-400 font-medium tracking-wide lg:opacity-0 -translate-y-8 lg:-translate-y-12 lg:group-hover:opacity-100 ${hoverTranslateClass} group-hover:text-neutral-600 group-focus-visible:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:text-neutral-600 transition-all duration-300 ease-out`}>
           {variant.label}
         </span>
       </motion.div>
