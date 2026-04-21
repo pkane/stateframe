@@ -14,7 +14,7 @@ export const componentRegistry: ComponentGroup[] = [
     variants: [
       {
         id: 'button-primary',
-        label: 'Primary',
+        label: 'Button · Primary',
         purpose: 'The primary call-to-action. Use for the single most important action on a screen — there should only ever be one per view.',
         component: Button,
         defaultProps: { children: 'Button', variant: 'primary' },
@@ -29,7 +29,7 @@ export const componentRegistry: ComponentGroup[] = [
       },
       {
         id: 'button-secondary',
-        label: 'Secondary',
+        label: 'Button · Secondary',
         purpose: 'A lower-emphasis alternative to the primary button. Use for secondary or supplementary actions that exist alongside a primary action.',
         component: Button,
         defaultProps: { children: 'Button', variant: 'secondary' },
@@ -43,7 +43,7 @@ export const componentRegistry: ComponentGroup[] = [
       },
       {
         id: 'button-destructive',
-        label: 'Destructive',
+        label: 'Button · Destructive',
         purpose: 'For actions that could have irreversible or harmful effects on the user\'s data, such as delete or remove. Use sparingly to preserve its urgency.',
         component: Button,
         defaultProps: { children: 'Delete', variant: 'destructive' },

@@ -13,6 +13,7 @@ import { ComponentCell } from './ComponentCell'
 import { StateCell } from './StateCell'
 import { StateToolbar } from './StateToolbar'
 import { CodeDrawer } from './CodeDrawer'
+import { PinnedRail } from './PinnedRail'
 
 // ─── Transform helpers ────────────────────────────────────────────────────────
 
@@ -57,15 +58,25 @@ const CATEGORY_COLOR: Record<string, string> = {
 }
 
 type StateDetailOverlayProps = {
-  groupLabel: string
-  variant: import('@/lib/types').ComponentVariant
-  state:   import('@/lib/types').ComponentState
+  groupLabel:    string
+  variant:       import('@/lib/types').ComponentVariant
+  state:         import('@/lib/types').ComponentState
+  splitView:     boolean
+  splitVariant:  import('@/lib/types').ComponentVariant | null
+  splitState:    import('@/lib/types').ComponentState   | null
+  splitIndex:    number
+  splitTotal:    number
+  onSplitPrev:   () => void
+  onSplitNext:   () => void
 }
 
-function StateDetailOverlay({ groupLabel, variant, state }: StateDetailOverlayProps) {
-  const isPresent = useIsPresent()
-  const Component = variant.component
-  const props     = variant.defaultProps ?? {}
+function StateDetailOverlay({
+  groupLabel, variant, state,
+  splitView, splitVariant, splitState, splitIndex, splitTotal, onSplitPrev, onSplitNext,
+}: StateDetailOverlayProps) {
+  const isPresent   = useIsPresent()
+  const Component   = variant.component
+  const props       = variant.defaultProps ?? {}
 
   return (
     <motion.div
@@ -76,49 +87,128 @@ function StateDetailOverlay({ groupLabel, variant, state }: StateDetailOverlayPr
       transition={{ duration: 0.35, ease: ZOOM_EASING }}
       {...(!isPresent && { inert: true })}
     >
-      <div className="relative w-[85vw] h-[75vh]">
-        <motion.div
-          className="absolute inset-0 rounded-2xl bg-white ring-1 ring-neutral-300"
-          initial={{ scale: 0.94 }}
-          animate={{ scale: 1 }}
-          exit={{ scale: 0.94 }}
-          transition={{ duration: 1, ease: ZOOM_EASING }}
-        >
-          <div className="flex absolute top-3 left-3.5 items-center gap-3">
-            <div className={cn('w-3 h-3 rounded-full', CATEGORY_COLOR[state.category])} />
-            <span className="text-sm text-neutral-600 tracking-wide">{state.label}</span>
-          </div>
-          <div className="absolute top-3 right-3.5 flex items-center gap-3">
-            <span className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse" aria-hidden />
-            <span className="text-sm font-medium text-neutral-600">Live</span>
-          </div>
-
-          {/* Metadata — bottom-left of card */}
-          <div className="absolute bottom-5 left-6 right-6 flex items-end justify-between gap-6">
-            <div className="flex flex-col gap-1">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400">
-                {groupLabel} / {variant.label}
-              </p>
-              <p className="text-[13px] font-medium text-neutral-700 leading-snug">
-                {state.label} state
-              </p>
-              {variant.purpose && (
-                <p className="text-[11px] text-neutral-400 leading-relaxed max-w-sm mt-0.5">
-                  {variant.purpose}
+      {/* Content area — animates between single and split width */}
+      <motion.div
+        className="flex gap-5 h-[75vh] flex-wrap"
+        animate={{ width: splitView ? '90vw' : '85vw' }}
+        transition={{ duration: 0.45, ease: ZOOM_EASING }}
+      >
+        {/* ── Primary panel (always shown) ── */}
+        <motion.div layout className="relative flex-1 h-full" transition={{ duration: 0.45, ease: ZOOM_EASING }}>
+          <motion.div
+            className="absolute inset-0 rounded-2xl bg-white ring-1 ring-neutral-300"
+            initial={{ scale: 0.94 }}
+            animate={{ scale: 1 }}
+            exit={{ scale: 0.94 }}
+            transition={{ duration: 1, ease: ZOOM_EASING }}
+          >
+            <div className="flex absolute top-3 left-3.5 items-center gap-3">
+              <div className={cn('w-3 h-3 rounded-full', CATEGORY_COLOR[state.category])} />
+              <span className="text-sm text-neutral-600 tracking-wide">{state.label}</span>
+            </div>
+            <div className="absolute top-3 right-3.5 flex items-center gap-3">
+              <span className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse" aria-hidden />
+              <span className="text-sm font-medium text-neutral-600">Live</span>
+            </div>
+            <div className="absolute bottom-5 left-6 right-6">
+              <div className="flex flex-col gap-1">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400">
+                  {groupLabel} / {variant.label}
                 </p>
-              )}
+                <p className="text-[13px] font-medium text-neutral-700 leading-snug">
+                  {state.label} state
+                </p>
+                {!splitView && variant.purpose && (
+                  <p className="text-[11px] text-neutral-400 leading-relaxed max-w-sm mt-0.5">
+                    {variant.purpose}
+                  </p>
+                )}
+              </div>
+            </div>
+          </motion.div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="scale-[2] origin-center">
+              <Component {...props} className={state.forcedClassName} />
             </div>
           </div>
         </motion.div>
+        
+        {/* ── Split panel (right side) ── */}
+        <AnimatePresence>
+          {splitView && splitVariant && splitState && (
+            <motion.div
+              key="split-panel"
+              className="relative flex-1 h-full flex flex-col gap-3"
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 40 }}
+              transition={{ duration: 0.35, ease: ZOOM_EASING }}
+            >
+              {/* Card */}
+              <div className="relative flex-1">
+                <div className="absolute inset-0 rounded-2xl bg-white ring-1 ring-neutral-300">
+                  <div className="flex absolute top-3 left-3.5 items-center gap-3">
+                    <div className={cn('w-3 h-3 rounded-full', CATEGORY_COLOR[splitState.category])} />
+                    <span className="text-sm text-neutral-600 tracking-wide">{splitState.label}</span>
+                  </div>
+                  <div className="absolute bottom-5 left-6 right-6">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400">
+                      {splitVariant.label} / {splitState.label}
+                    </p>
+                  </div>
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="scale-[2] origin-center">
+                    <splitVariant.component {...(splitVariant.defaultProps ?? {})} className={splitState.forcedClassName} />
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
 
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="scale-[2] origin-center">
-            <Component {...props} className={state.forcedClassName} />
-          </div>
-        </div>
-      </div>
+      {/* Split navigation — lives outside the panels so it doesn't constrain their height */}
+      <AnimatePresence>
+        {splitView && splitVariant && splitState && (
+          <motion.div
+            key="split-nav"
+            className="flex w-[90vw] justify-end mt-3"
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 4 }}
+            transition={{ duration: 0.2, ease: ZOOM_EASING }}
+          >
+            <div className="flex w-1/2 items-center justify-between text-[11px] text-neutral-400 px-1">
+              <button
+                onClick={onSplitPrev}
+                className="flex items-center gap-1 hover:text-neutral-700 transition-colors duration-150 cursor-pointer"
+                aria-label="Previous pinned state"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><polyline points="15 18 9 12 15 6" /></svg>
+                prev
+              </button>
+              <span>{splitIndex + 1} of {splitTotal} pinned</span>
+              <button
+                onClick={onSplitNext}
+                className="flex items-center gap-1 hover:text-neutral-700 transition-colors duration-150 cursor-pointer"
+                aria-label="Next pinned state"
+              >
+                next
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><polyline points="9 18 15 12 9 6" /></svg>
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <CodeDrawer variant={variant} state={state} />
+      <CodeDrawer
+        variant={variant}
+        state={state}
+        splitView={splitView}
+        splitVariant={splitVariant}
+        splitState={splitState}
+      />
     </motion.div>
   )
 }
@@ -126,7 +216,7 @@ function StateDetailOverlay({ groupLabel, variant, state }: StateDetailOverlayPr
 // ─── Inner canvas ─────────────────────────────────────────────────────────────
 
 function CanvasInner() {
-  const { zoomLevel, activeVariant, activeState, splitView, hiddenStates, pinnedStates } = useAppState()
+  const { zoomLevel, activeVariant, activeState, splitView, splitViewIndex, hiddenStates, pinnedStates } = useAppState()
   const dispatch = useAppDispatch()
 
   const containerRef = useRef<HTMLDivElement>(null)
@@ -222,17 +312,38 @@ function CanvasInner() {
   }, [canGoBack, zoomOut, zoomLevel, activeVariant, zoomToComponent])
 
   // Active variant lookups
-  const activeVariantData = activeVariant
-    ? componentRegistry.flatMap(g => g.variants).find(v => v.id === activeVariant) ?? null
-    : null
+  const allFlatVariants    = componentRegistry.flatMap(g => g.variants)
+  const activeVariantData  = activeVariant  ? allFlatVariants.find(v => v.id === activeVariant) ?? null : null
   const activeVariantLabel = activeVariantData?.label ?? null
-  const activeGroup = activeVariant
-    ? componentRegistry.find(g => g.variants.some(v => v.id === activeVariant)) ?? null
-    : null
-  const activeGroupId = activeGroup?.id ?? null
-  const activeStateData = activeState && activeVariantData
-    ? activeVariantData.states.find(s => s.id === activeState) ?? null
-    : null
+  const activeGroup        = activeVariant  ? componentRegistry.find(g => g.variants.some(v => v.id === activeVariant)) ?? null : null
+  const activeGroupId      = activeGroup?.id ?? null
+  const activeStateData    = activeState && activeVariantData ? activeVariantData.states.find(s => s.id === activeState) ?? null : null
+
+  // Split view data
+  const splitPin         = splitView ? (pinnedStates[splitViewIndex] ?? null) : null
+  const splitVariantData = splitPin  ? allFlatVariants.find(v => v.id === splitPin.variantId) ?? null : null
+  const splitStateData   = splitPin && splitVariantData ? splitVariantData.states.find(s => s.id === splitPin.stateId) ?? null : null
+
+  const handleSplitActivate = (index: number) => {
+    const pin = pinnedStates[index]
+    if (!pin) return
+    if (zoomLevel === 'state-detail') {
+      if (splitView && splitViewIndex === index) {
+        dispatch({ type: 'ZOOM_OUT' })
+      } else {
+        dispatch({ type: 'SET_SPLIT_INDEX', index })
+        if (!splitView) dispatch({ type: 'TOGGLE_SPLIT_VIEW' })
+      }
+    } else {
+      // Level 2: jump straight to that state's detail view
+      dispatch({ type: 'ZOOM_TO_COMPONENT', variantId: pin.variantId })
+      dispatch({ type: 'ZOOM_TO_STATE', stateId: pin.stateId })
+    }
+  }
+  const handleSplitPrev = () =>
+    dispatch({ type: 'SET_SPLIT_INDEX', index: (splitViewIndex - 1 + pinnedStates.length) % pinnedStates.length })
+  const handleSplitNext = () =>
+    dispatch({ type: 'SET_SPLIT_INDEX', index: (splitViewIndex + 1) % pinnedStates.length })
 
   return (
     <div
@@ -453,6 +564,16 @@ function CanvasInner() {
         )}
       </AnimatePresence>
 
+      {/* ── Pinned rail — level 2 + 3 ── */}
+      <PinnedRail
+        pinnedStates={pinnedStates}
+        zoomLevel={zoomLevel}
+        splitView={splitView}
+        splitViewIndex={splitViewIndex}
+        onActivate={handleSplitActivate}
+        onUnpin={(variantId, stateId) => dispatch({ type: 'UNPIN_STATE', variantId, stateId })}
+      />
+
       {/* ── Level 3: state detail overlay ── */}
       <AnimatePresence>
         {zoomLevel === 'state-detail' && activeVariantData && activeStateData && (
@@ -461,6 +582,13 @@ function CanvasInner() {
             groupLabel={activeGroup?.label ?? ''}
             variant={activeVariantData}
             state={activeStateData}
+            splitView={splitView}
+            splitVariant={splitVariantData}
+            splitState={splitStateData}
+            splitIndex={splitViewIndex}
+            splitTotal={pinnedStates.length}
+            onSplitPrev={handleSplitPrev}
+            onSplitNext={handleSplitNext}
           />
         )}
       </AnimatePresence>
