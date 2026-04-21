@@ -24,7 +24,7 @@ export function CodeDrawer({ variant, state }: CodeDrawerProps) {
       {/* Handle */}
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full h-11 flex items-center justify-between px-8 text-[14px] font-medium text-neutral-400 hover:text-neutral-700 transition-colors duration-150"
+        className="w-full h-11 flex items-center justify-between px-8 text-[14px] font-medium text-neutral-400 hover:text-neutral-700 transition-colors duration-150 cursor-pointer"
         aria-expanded={open}
         aria-label="Toggle props drawer"
       >
