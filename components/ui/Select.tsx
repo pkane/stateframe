@@ -29,7 +29,7 @@ export function Select({
   const displayValue = selected
 
   return (
-    <div className={cn('flex flex-col gap-1.5 w-48', isDisabled && 'opacity-40')}>
+    <div className={cn('flex flex-col gap-1.5 w-32 md:w-48', isDisabled && 'opacity-40')}>
       <label className="text-xs font-medium text-neutral-700">{label}</label>
       <div className="relative">
         <button

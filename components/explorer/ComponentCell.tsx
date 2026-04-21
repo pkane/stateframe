@@ -30,17 +30,14 @@ export const ComponentCell = forwardRef<HTMLDivElement, ComponentCellProps>(
         whileHover={targetOpacity > 0 && targetOpacity < 1 ? { opacity: 1 } : undefined}
         transition={{ opacity: { duration: 0.4 } }}
       >
-        {/* Glow circle */}
-        <div className="relative flex w-52 h-32 items-center justify-center">
-
+        <div className="relative flex w-36 md:w-52 h-32 items-center justify-center">
           <div
             className="absolute inset-0 rounded-full transition-transform duration-500 ease-out pointer-events-none"
           />
-
           {/* Hover/focus glow — wider radius, brighter, fades in */}
           <div
             className="absolute -inset-5 rounded-full opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-500 ease-out pointer-events-none"
-            style={{ background: 'radial-gradient(circle, #ebebeb 0%, transparent 65%)', transform: 'scale(2)' }}
+            style={{ background: 'radial-gradient(circle, #ebebeb 0%, transparent 65%)', transform: 'scale(1.3)' }}
           />
 
           {/* Focus ring */}

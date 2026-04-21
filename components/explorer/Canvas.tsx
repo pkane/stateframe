@@ -108,9 +108,8 @@ function CanvasInner() {
   const { zoomLevel, activeVariant, activeState, splitView, hiddenStates, pinnedStates } = useAppState()
   const dispatch = useAppDispatch()
 
-  const containerRef    = useRef<HTMLDivElement>(null)
-  const cellRefs        = useRef<Map<string, HTMLDivElement>>(new Map())
-  const groupScrollRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const containerRef = useRef<HTMLDivElement>(null)
+  const cellRefs     = useRef<Map<string, HTMLDivElement>>(new Map())
 
   const [canvasTransform, setCanvasTransform] = useState<CanvasTransform>(IDENTITY)
   const canvasTransformRef = useRef<CanvasTransform>(IDENTITY)
@@ -144,13 +143,22 @@ function CanvasInner() {
     if (zoomLevel === 'overview') setCanvasTransform(IDENTITY)
   }, [zoomLevel])
 
+  const [groupScrollX, setGroupScrollX] = useState<Record<string, number>>({})
+
   const zoomOut = useCallback(() => dispatch({ type: 'ZOOM_OUT' }), [dispatch])
 
-  const scrollGroup = useCallback((groupId: string, direction: 'left' | 'right') => {
-    const el = groupScrollRefs.current.get(groupId)
-    if (!el) return
-    el.scrollBy({ left: direction === 'right' ? 240 : -240, behavior: 'smooth' })
-  }, [])
+  const scrollGroup = useCallback((groupId: string, direction: 'left' | 'right', variantCount: number) => {
+    const rowWidth    = Math.min(viewportWidth, 1024) - 80
+    const totalWidth  = variantCount * 208 + (variantCount - 1) * 16
+    const maxScroll   = Math.max(0, totalWidth - rowWidth)
+    setGroupScrollX(prev => {
+      const current = prev[groupId] ?? 0
+      const next = direction === 'right'
+        ? Math.min(current + 240, maxScroll)
+        : Math.max(0, current - 240)
+      return { ...prev, [groupId]: next }
+    })
+  }, [viewportWidth])
 
   // Zoom into a cell — compute transform, store natural pos for state grid anchoring
   const zoomToComponent = useCallback((variantId: string) => {
@@ -217,14 +225,14 @@ function CanvasInner() {
         transition={ZOOM_SPRING}
       >
         <main
-          className="mx-auto max-w-5xl pl-10 pt-24 pb-20"
+          className="mx-auto max-w-5xl pt-24 pb-20"
           role="main"
           aria-label="Component overview"
         >
-          <div className="flex flex-col gap-16">
+          <div className="flex flex-col gap-12 md:gap-16">
             {componentRegistry.map((group, groupIndex) => (
               <section key={group.id} aria-labelledby={`group-${group.id}`}>
-                <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center justify-between mb-5 px-10">
                   <motion.h2
                     id={`group-${group.id}`}
                     className={`${zoomLevel !== 'overview' && '!opacity-0'} text-[14px] font-semibold uppercase tracking-widest text-neutral-400`}
@@ -236,31 +244,44 @@ function CanvasInner() {
                   </motion.h2>
 
                   <div className={cn('flex gap-0.5 transition-opacity duration-300', zoomLevel !== 'overview' && 'opacity-0 pointer-events-none')}>
-                    {(['left', 'right'] as const).map((dir) => (
-                      <button
-                        key={dir}
-                        onClick={() => scrollGroup(group.id, dir)}
-                        tabIndex={zoomLevel === 'overview' ? 0 : -1}
-                        className="p-1.5 rounded-md text-neutral-300 hover:text-neutral-600 transition-colors duration-150"
-                        aria-label={`Scroll ${group.label} ${dir}`}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                          {dir === 'left'
-                            ? <polyline points="15 18 9 12 15 6" />
-                            : <polyline points="9 18 15 12 9 6" />
-                          }
-                        </svg>
-                      </button>
-                    ))}
+                    {(['left', 'right'] as const).map((dir) => {
+                      const rowWidth   = Math.min(viewportWidth, 1024) - 80
+                      const totalWidth = group.variants.length * 208 + (group.variants.length - 1) * 16
+                      const scrolled   = groupScrollX[group.id] ?? 0
+                      const visible    = dir === 'left'
+                        ? scrolled > 0
+                        : totalWidth - scrolled > rowWidth
+                      return (
+                        <button
+                          key={dir}
+                          onClick={() => scrollGroup(group.id, dir, group.variants.length)}
+                          tabIndex={zoomLevel === 'overview' && visible ? 0 : -1}
+                          aria-hidden={!visible}
+                          className={cn(
+                            'p-1.5 rounded-md text-neutral-300 hover:text-neutral-600 transition-all duration-150',
+                            !visible && 'opacity-0 pointer-events-none',
+                          )}
+                          aria-label={`Scroll ${group.label} ${dir}`}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                            {dir === 'left'
+                              ? <polyline points="15 18 9 12 15 6" />
+                              : <polyline points="9 18 15 12 9 6" />
+                            }
+                          </svg>
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
 
+                <div style={zoomLevel === 'overview' ? { overflowX: 'clip' } : undefined}>
                 <div
-                  ref={(el) => {
-                    if (el) groupScrollRefs.current.set(group.id, el)
-                    else groupScrollRefs.current.delete(group.id)
+                  className="flex gap-4"
+                  style={{
+                    transform: `translateX(-${groupScrollX[group.id] ?? 0}px)`,
+                    transition: `transform 0.4s cubic-bezier(${ZOOM_EASING.join(',')})`,
                   }}
-                  className="flex gap-4 overflow-x-auto overflow-y-hidden [&::-webkit-scrollbar]:hidden"
                 >
                   {group.variants.map((variant, variantIndex) => {
                     const isActive       = zoomLevel === 'component' && variant.id === activeVariant
@@ -306,6 +327,7 @@ function CanvasInner() {
                       />
                     </motion.div>
                   )})}
+                </div>
                 </div>
               </section>
             ))}
