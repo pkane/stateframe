@@ -57,11 +57,12 @@ const CATEGORY_COLOR: Record<string, string> = {
 }
 
 type StateDetailOverlayProps = {
+  groupLabel: string
   variant: import('@/lib/types').ComponentVariant
   state:   import('@/lib/types').ComponentState
 }
 
-function StateDetailOverlay({ variant, state }: StateDetailOverlayProps) {
+function StateDetailOverlay({ groupLabel, variant, state }: StateDetailOverlayProps) {
   const isPresent = useIsPresent()
   const Component = variant.component
   const props     = variant.defaultProps ?? {}
@@ -77,16 +78,36 @@ function StateDetailOverlay({ variant, state }: StateDetailOverlayProps) {
     >
       <div className="relative w-[85vw] h-[75vh]">
         <motion.div
-          className="absolute inset-0 rounded-2xl bg-white ring-1 ring-neutral-200"
+          className="absolute inset-0 rounded-2xl bg-white ring-1 ring-neutral-300"
           initial={{ scale: 0.94 }}
           animate={{ scale: 1 }}
           exit={{ scale: 0.94 }}
           transition={{ duration: 1, ease: ZOOM_EASING }}
         >
-          <div className={cn('absolute top-3 left-3.5 w-1.5 h-1.5 rounded-full', CATEGORY_COLOR[state.category])} />
-          <div className="absolute top-2.5 right-3.5 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" aria-hidden />
-            <span className="text-xs font-medium text-neutral-400">Live</span>
+          <div className="flex absolute top-3 left-3.5 items-center gap-3">
+            <div className={cn('w-3 h-3 rounded-full', CATEGORY_COLOR[state.category])} />
+            <span className="text-sm text-neutral-600 tracking-wide">{state.label}</span>
+          </div>
+          <div className="absolute top-3 right-3.5 flex items-center gap-3">
+            <span className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse" aria-hidden />
+            <span className="text-sm font-medium text-neutral-600">Live</span>
+          </div>
+
+          {/* Metadata — bottom-left of card */}
+          <div className="absolute bottom-5 left-6 right-6 flex items-end justify-between gap-6">
+            <div className="flex flex-col gap-1">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400">
+                {groupLabel} / {variant.label}
+              </p>
+              <p className="text-[13px] font-medium text-neutral-700 leading-snug">
+                {state.label} state
+              </p>
+              {variant.purpose && (
+                <p className="text-[11px] text-neutral-400 leading-relaxed max-w-sm mt-0.5">
+                  {variant.purpose}
+                </p>
+              )}
+            </div>
           </div>
         </motion.div>
 
@@ -180,26 +201,35 @@ function CanvasInner() {
     dispatch({ type: 'ZOOM_TO_COMPONENT', variantId })
   }, [dispatch, zoomScale])
 
-  // Escape → ZOOM_OUT
+  // Escape → ZOOM_OUT; ArrowLeft/Right → prev/next variant at level 2
   useEffect(() => {
+    const allVariants = componentRegistry.flatMap(g => g.variants)
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && canGoBack) {
         (document.activeElement as HTMLElement)?.blur()
         zoomOut()
+        return
+      }
+      if (zoomLevel === 'component' && activeVariant && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+        e.preventDefault()
+        const idx  = allVariants.findIndex(v => v.id === activeVariant)
+        const next = e.key === 'ArrowRight' ? allVariants[idx + 1] : allVariants[idx - 1]
+        if (next) zoomToComponent(next.id)
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [canGoBack, zoomOut])
+  }, [canGoBack, zoomOut, zoomLevel, activeVariant, zoomToComponent])
 
   // Active variant lookups
   const activeVariantData = activeVariant
     ? componentRegistry.flatMap(g => g.variants).find(v => v.id === activeVariant) ?? null
     : null
   const activeVariantLabel = activeVariantData?.label ?? null
-  const activeGroupId = activeVariant
-    ? componentRegistry.find(g => g.variants.some(v => v.id === activeVariant))?.id ?? null
+  const activeGroup = activeVariant
+    ? componentRegistry.find(g => g.variants.some(v => v.id === activeVariant)) ?? null
     : null
+  const activeGroupId = activeGroup?.id ?? null
   const activeStateData = activeState && activeVariantData
     ? activeVariantData.states.find(s => s.id === activeState) ?? null
     : null
@@ -258,7 +288,7 @@ function CanvasInner() {
                           tabIndex={zoomLevel === 'overview' && visible ? 0 : -1}
                           aria-hidden={!visible}
                           className={cn(
-                            'p-1.5 rounded-md text-neutral-300 hover:text-neutral-600 transition-all duration-150',
+                            'p-1.5 rounded-md text-neutral-400 hover:text-neutral-600 transition-all duration-150',
                             !visible && 'opacity-0 pointer-events-none',
                           )}
                           aria-label={`Scroll ${group.label} ${dir}`}
@@ -382,6 +412,33 @@ function CanvasInner() {
         {/* Level 3 slot — added in step 8 */}
       </motion.div>
 
+      {/* ── Keyboard hint strip — shown whenever not at overview ── */}
+      <AnimatePresence>
+        {zoomLevel !== 'overview' && (
+          <motion.ul
+            className="fixed top-[68px] left-8 z-50 flex flex-col gap-1 list-none"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.2, ease: ZOOM_EASING, delay: 0.1 }}
+            aria-label="Keyboard shortcuts"
+          >
+            {([
+              { key: 'ESC', label: 'Zoom out', showOn: ['component', 'state-detail'] },
+              { key: '←',   label: 'Previous', showOn: ['component'] },
+              { key: '→',   label: 'Next', showOn: ['component'] },
+            ]).filter(({ showOn }) => showOn.includes(zoomLevel)).map(({ key, label }) => (
+              <li key={key} className="flex items-center gap-2 text-[11px] text-neutral-400">
+                <kbd className="font-mono bg-neutral-100 text-neutral-500 px-1.5 py-0.5 rounded text-[10px] leading-tight min-w-[28px] text-center">
+                  {key}
+                </kbd>
+                {label}
+              </li>
+            ))}
+          </motion.ul>
+        )}
+      </AnimatePresence>
+
       {/* ── Level 2 toolbar — fixed in viewport space ── */}
       <AnimatePresence>
         {zoomLevel === 'component' && activeVariantData && (
@@ -401,6 +458,7 @@ function CanvasInner() {
         {zoomLevel === 'state-detail' && activeVariantData && activeStateData && (
           <StateDetailOverlay
             key="state-detail"
+            groupLabel={activeGroup?.label ?? ''}
             variant={activeVariantData}
             state={activeStateData}
           />

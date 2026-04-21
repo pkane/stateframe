@@ -43,13 +43,16 @@ export function StateCell({ state, variant, index, isPinned, density, onPin, onU
     >
       <div
         className={cn(
-          'relative flex items-center justify-center rounded-md bg-white ring-1 transition-all duration-200 overflow-hidden',
-          'ring-neutral-200 group-hover:ring-neutral-400 group-focus-visible:ring-2 group-focus-visible:ring-neutral-900',
+          'relative flex items-center justify-center rounded-md bg-white ring-[.5px] transition-all duration-200 overflow-hidden',
+          'ring-neutral-300 group-hover:ring-neutral-400 group-focus-visible:ring-2 group-focus-visible:ring-neutral-900',
           isCompact ? 'w-32 h-18 md:w-36 md:h-20' : 'w-42 h-24',
         )}
       >
-        {/* Category dot */}
-        <div className={cn('absolute top-2 left-2.5 w-1.5 h-1.5 rounded-full', CATEGORY_DOT[state.category])} />
+        <div className='flex absolute top-1 left-[.375em] items-center gap-1'>
+          {/* Category dot */}
+          <div className={cn('w-1.5 h-1.5 rounded-full', CATEGORY_DOT[state.category])}></div>
+          <span className="text-[8px] text-neutral-600 tracking-wide">{state.label}</span>
+        </div>
 
         {/* Pin button */}
         <button
@@ -77,11 +80,8 @@ export function StateCell({ state, variant, index, isPinned, density, onPin, onU
           inert
         >
           <Component {...props} className={state.forcedClassName} />
-          <span className="block relative -bottom-4 md:hidden text-xs text-center font-medium tracking-wide">{state.label}</span>
         </div>
       </div>
-
-      <span className="hidden md:visible text-xs text-neutral-400 font-medium tracking-wide">{state.label}</span>
     </motion.div>
   )
 }

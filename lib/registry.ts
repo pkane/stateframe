@@ -15,6 +15,7 @@ export const componentRegistry: ComponentGroup[] = [
       {
         id: 'button-primary',
         label: 'Primary',
+        purpose: 'The primary call-to-action. Use for the single most important action on a screen — there should only ever be one per view.',
         component: Button,
         defaultProps: { children: 'Button', variant: 'primary' },
         states: [
@@ -29,6 +30,7 @@ export const componentRegistry: ComponentGroup[] = [
       {
         id: 'button-secondary',
         label: 'Secondary',
+        purpose: 'A lower-emphasis alternative to the primary button. Use for secondary or supplementary actions that exist alongside a primary action.',
         component: Button,
         defaultProps: { children: 'Button', variant: 'secondary' },
         states: [
@@ -42,6 +44,7 @@ export const componentRegistry: ComponentGroup[] = [
       {
         id: 'button-destructive',
         label: 'Destructive',
+        purpose: 'For actions that could have irreversible or harmful effects on the user\'s data, such as delete or remove. Use sparingly to preserve its urgency.',
         component: Button,
         defaultProps: { children: 'Delete', variant: 'destructive' },
         states: [
@@ -61,6 +64,7 @@ export const componentRegistry: ComponentGroup[] = [
       {
         id: 'input-text',
         label: 'Text Input',
+        purpose: 'A single-line text field for collecting short-form user input such as names, emails, or search queries.',
         component: TextInput,
         defaultProps: { placeholder: 'Placeholder', label: 'Label' },
         states: [
@@ -74,6 +78,7 @@ export const componentRegistry: ComponentGroup[] = [
       {
         id: 'input-password',
         label: 'Password Input',
+        purpose: 'A text field that masks its contents for sensitive credentials. Includes a visibility toggle so users can verify what they\'ve typed.',
         component: PasswordInput,
         defaultProps: { placeholder: 'Password', label: 'Password' },
         states: [
@@ -86,6 +91,7 @@ export const componentRegistry: ComponentGroup[] = [
       {
         id: 'input-checkbox',
         label: 'Checkbox',
+        purpose: 'A binary selection control for boolean choices or multi-select lists. Supports an indeterminate state for parent checkboxes with partially-selected children.',
         component: Checkbox,
         defaultProps: { label: 'Checkbox label' },
         states: [
@@ -99,6 +105,7 @@ export const componentRegistry: ComponentGroup[] = [
       {
         id: 'input-select',
         label: 'Select',
+        purpose: 'A dropdown control for choosing a single option from a predefined list. Use when the option set is too large for radio buttons but small enough to enumerate.',
         component: Select,
         defaultProps: { placeholder: 'Select an option', label: 'Label' },
         states: [
@@ -118,6 +125,7 @@ export const componentRegistry: ComponentGroup[] = [
       {
         id: 'badge-neutral',
         label: 'Badge · Neutral',
+        purpose: 'A non-semantic status label with no implied urgency. Use for informational tags, categories, or counts.',
         component: Badge,
         defaultProps: { children: 'Neutral', tone: 'neutral' },
         states: [
@@ -127,6 +135,7 @@ export const componentRegistry: ComponentGroup[] = [
       {
         id: 'badge-success',
         label: 'Badge · Success',
+        purpose: 'Signals a positive outcome, completed action, or healthy status. Use when the user needs confirmation that something worked.',
         component: Badge,
         defaultProps: { children: 'Success', tone: 'success' },
         states: [
@@ -136,6 +145,7 @@ export const componentRegistry: ComponentGroup[] = [
       {
         id: 'badge-warning',
         label: 'Badge · Warning',
+        purpose: 'Indicates a potential issue that requires attention but is not yet critical. Use to surface degraded or at-risk states before they become errors.',
         component: Badge,
         defaultProps: { children: 'Warning', tone: 'warning' },
         states: [
@@ -145,6 +155,7 @@ export const componentRegistry: ComponentGroup[] = [
       {
         id: 'badge-error',
         label: 'Badge · Error',
+        purpose: 'Marks a failure, critical issue, or invalid state that requires immediate user action. Use sparingly to preserve its urgency.',
         component: Badge,
         defaultProps: { children: 'Error', tone: 'error' },
         states: [
@@ -160,6 +171,7 @@ export const componentRegistry: ComponentGroup[] = [
       {
         id: 'link',
         label: 'Link',
+        purpose: 'An inline navigational element for text-based navigation within content or to external destinations. Avoid using links where a button action is more appropriate.',
         component: Link,
         defaultProps: { children: 'Link text', href: '#' },
         states: [

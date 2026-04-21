@@ -12,6 +12,7 @@ export type ComponentState = {
 export type ComponentVariant = {
   id: string
   label: string
+  purpose?: string
   defaultProps?: Record<string, unknown>
   states: ComponentState[]
   component: ComponentType<Record<string, unknown>>

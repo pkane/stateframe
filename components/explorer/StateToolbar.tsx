@@ -25,7 +25,7 @@ export function StateToolbar({
       exit={{ opacity: 0, y: 6 }}
       transition={{ duration: 0.3, ease: ZOOM_EASING, delay: 0.15 }}
     >
-      <div className="flex items-center gap-2.5 p-4 bg-white rounded-md shadow-md border border-neutral-200/80 text-xs md:text-sm font-medium">
+      <div className="flex items-center gap-2.5 p-4 bg-white rounded-md border border-neutral-300 text-xs md:text-sm font-medium">
 
         {/* Visibility pills — one per state */}
         <div className="flex items-center gap-3" role="group" aria-label="Toggle state visibility">
