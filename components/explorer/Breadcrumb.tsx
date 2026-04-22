@@ -26,7 +26,7 @@ export function Breadcrumb({ variant, state, onNavigateHome, onNavigateVariant }
 
   return (
     <nav
-      className="fixed top-6 z-50 w-full flex items-center gap-1.5 px-8 text-sm"
+      className="fixed top-0 md:top-6 z-50 w-full flex items-center gap-1.5 px-8 py-4 md:py-0 text-sm bg-white md:bg-transparent border-b border-neutral-200 md:border-none"
       aria-label="Explorer navigation"
     >
       <div className="relative inline-flex">
@@ -67,10 +67,10 @@ export function Breadcrumb({ variant, state, onNavigateHome, onNavigateVariant }
 
       {variant && (
         <>
-          <span className="text-neutral-300" aria-hidden>/</span>
+          <span className="text-neutral-300 text-xs md:text-sm" aria-hidden>/</span>
           <button
             onClick={onNavigateVariant}
-            className={`text-neutral-500 ${state && 'cursor-pointer hover:text-neutral-900'} transition-colors outline-none focus-visible:underline`}
+            className={`text-neutral-500 ${state && 'cursor-pointer hover:text-neutral-900'} text-xs md:text-sm transition-colors outline-none focus-visible:underline`}
           >
             {variant}
           </button>
@@ -79,8 +79,8 @@ export function Breadcrumb({ variant, state, onNavigateHome, onNavigateVariant }
 
       {state && (
         <>
-          <span className="text-neutral-300" aria-hidden>/</span>
-          <span className="text-neutral-500">{state}</span>
+          <span className="text-neutral-300 text-xs md:text-sm" aria-hidden>/</span>
+          <span className="text-neutral-500 text-xs md:text-sm">{state}</span>
         </>
       )}
     </nav>

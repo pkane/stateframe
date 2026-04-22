@@ -33,7 +33,7 @@ export function TextInput({
         defaultValue={displayValue}
         disabled={isDisabled}
         className={cn(
-          'h-9 rounded-md border px-3 text-sm bg-white text-neutral-900 outline-none transition-colors duration-150',
+          'min-w-0 h-9 rounded-md border px-3 text-sm bg-white text-neutral-900 outline-none transition-colors duration-150',
           'placeholder:text-neutral-400',
           isError   ? 'border-red-500' : 'border-neutral-300',
           !isError && 'hover:border-neutral-400 focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/10',

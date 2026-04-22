@@ -20,7 +20,7 @@ export function PasswordInput({
   const isDisabled = className.includes('is-disabled')
 
   return (
-    <div className={cn('flex flex-col gap-1.5 w-48', isDisabled && 'opacity-40')}>
+    <div className={cn('flex flex-col gap-1.5 w-24 md:w-48', isDisabled && 'opacity-40')}>
       <label className="text-xs font-medium text-neutral-700">{label}</label>
       <div className={cn(
         'flex h-9 items-center rounded-md border bg-white px-3 transition-colors duration-150',
@@ -34,13 +34,13 @@ export function PasswordInput({
           type="password"
           placeholder={placeholder}
           disabled={isDisabled}
-          className="flex-1 bg-transparent text-sm text-neutral-900 outline-none placeholder:text-neutral-400"
+          className="flex-1 min-w-0 bg-transparent text-sm text-neutral-900 outline-none placeholder:text-neutral-400"
           aria-label={label}
           aria-invalid={isError}
         />
         <button
           type="button"
-          className="ml-4 text-neutral-400 hover:text-neutral-600"
+          className="ml-2 shrink-0 text-neutral-400 hover:text-neutral-600"
           tabIndex={-1}
           aria-label="Toggle password visibility"
         >

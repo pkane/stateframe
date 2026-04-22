@@ -63,7 +63,7 @@ export function PinnedRail({ pinnedStates, zoomLevel, splitView, splitViewIndex,
                 >
                   <div
                     className={cn(
-                      'relative w-14 h-9 md:w-24 h-14 rounded-md bg-white overflow-hidden transition-all duration-150',
+                      'relative w-14 h-9 md:w-24 md:h-14 rounded-md bg-white overflow-hidden transition-all duration-150',
                       isActive
                         ? 'ring-2 ring-neutral-900 shadow-sm'
                         : canActivate
@@ -85,7 +85,7 @@ export function PinnedRail({ pinnedStates, zoomLevel, splitView, splitViewIndex,
                 {/* Unpin button */}
                 <button
                   onClick={(e) => { e.stopPropagation(); onUnpin(pin.variantId, pin.stateId) }}
-                  className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-neutral-800 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150 cursor-pointer"
+                  className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-neutral-800 text-white flex items-center justify-center md:opacity-0 group-hover:opacity-100 transition-opacity duration-150 cursor-pointer"
                   aria-label={`Unpin ${pin.variantLabel} · ${pin.stateLabel}`}
                   tabIndex={-1}
                 >

@@ -80,7 +80,7 @@ function StateDetailOverlay({
 
   return (
     <motion.div
-      className="fixed inset-0 z-30 flex flex-col items-center justify-center bg-[#fafafa]"
+      className={cn('fixed inset-0 z-30 flex flex-col items-center bg-[#fafafa] md:justify-center md:mb-0', splitTotal > 0 ? 'justify-end mb-[10vh]' : 'justify-center')}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -89,7 +89,7 @@ function StateDetailOverlay({
     >
       {/* Content area — animates between single and split width */}
       <motion.div
-        className="flex gap-5 h-[75vh] flex-wrap"
+        className={cn('flex gap-5 flex-wrap md:h-[75vh]', splitTotal > 0 ? 'h-[70vh]' : 'h-[75vh]')}
         animate={{ width: splitView ? '90vw' : '85vw' }}
         transition={{ duration: 0.45, ease: ZOOM_EASING }}
       >
@@ -127,7 +127,7 @@ function StateDetailOverlay({
             </div>
           </motion.div>
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="scale-[2] origin-center">
+            <div className="md:scale-[2] origin-center">
               <Component {...props} className={state.forcedClassName} />
             </div>
           </div>
@@ -158,7 +158,7 @@ function StateDetailOverlay({
                   </div>
                 </div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="scale-[2] origin-center">
+                  <div className="md:scale-[2] origin-center">
                     <splitVariant.component {...(splitVariant.defaultProps ?? {})} className={splitState.forcedClassName} />
                   </div>
                 </div>
@@ -287,6 +287,8 @@ function CanvasInner() {
     const containerEl = containerRef.current
     if (!cellEl || !containerEl) return
 
+    window.scrollTo({ top: 0, behavior: 'instant' })
+
     const current   = canvasTransformRef.current
     const cell      = cellEl.getBoundingClientRect()
     const container = containerEl.getBoundingClientRect()
@@ -312,6 +314,7 @@ function CanvasInner() {
       }
       if (zoomLevel === 'component' && activeVariant && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
         e.preventDefault()
+        ;(document.activeElement as HTMLElement)?.blur()
         const idx  = allVariants.findIndex(v => v.id === activeVariant)
         const next = e.key === 'ArrowRight' ? allVariants[idx + 1] : allVariants[idx - 1]
         if (next) zoomToComponent(next.id)
@@ -320,6 +323,32 @@ function CanvasInner() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [canGoBack, zoomOut, zoomLevel, activeVariant, zoomToComponent])
+
+  // Swipe left/right → prev/next variant at level 2
+  useEffect(() => {
+    if (zoomLevel !== 'component' || !activeVariant) return
+    let startX = 0
+    let startY = 0
+    const onTouchStart = (e: TouchEvent) => {
+      startX = e.touches[0].clientX
+      startY = e.touches[0].clientY
+    }
+    const onTouchEnd = (e: TouchEvent) => {
+      const dx = e.changedTouches[0].clientX - startX
+      const dy = e.changedTouches[0].clientY - startY
+      if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return
+      const allVariants = componentRegistry.flatMap(g => g.variants)
+      const idx  = allVariants.findIndex(v => v.id === activeVariant)
+      const next = dx < 0 ? allVariants[idx + 1] : allVariants[idx - 1]
+      if (next) zoomToComponent(next.id)
+    }
+    window.addEventListener('touchstart', onTouchStart, { passive: true })
+    window.addEventListener('touchend', onTouchEnd, { passive: true })
+    return () => {
+      window.removeEventListener('touchstart', onTouchStart)
+      window.removeEventListener('touchend', onTouchEnd)
+    }
+  }, [zoomLevel, activeVariant, zoomToComponent])
 
   // Active variant lookups
   const allFlatVariants    = componentRegistry.flatMap(g => g.variants)

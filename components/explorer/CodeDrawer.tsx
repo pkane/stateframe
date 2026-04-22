@@ -42,7 +42,7 @@ function DrawerPanel({ variant, state }: { variant: ComponentVariant; state: Com
   }
 
   return (
-    <div className="flex gap-12">
+    <div className="flex-wrap md:flex-nowrap flex gap-12">
       <div>
         <p className="text-[9px] font-semibold uppercase tracking-widest text-neutral-300 mb-3">Usage</p>
         <div className="relative">
@@ -120,7 +120,7 @@ export function CodeDrawer({ variant, state, splitView, splitVariant, splitState
 
       {/* Content */}
       {isSplit ? (
-        <div className="flex pb-8 pt-1">
+        <div className="flex gap-6 flex-col md:flex-row pb-8 pt-1">
           <div className="flex-1 px-8">
             <DrawerPanel variant={variant} state={state} />
           </div>

@@ -62,7 +62,7 @@ export function StateCell({ state, variant, index, isPinned, density, onPin, onU
             'absolute top-1.5 right-1.5 p-1 rounded-md transition-all duration-150',
             isPinned
               ? 'opacity-100 text-neutral-900'
-              : 'opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-neutral-900',
+              : 'opacity-100 md:opacity-0 md:group-hover:opacity-100 text-neutral-400 hover:text-neutral-900',
           )}
           aria-label={isPinned ? `Unpin ${state.label}` : `Pin ${state.label}`}
           tabIndex={-1}
