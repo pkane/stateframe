@@ -287,7 +287,7 @@ function CanvasInner() {
     const containerEl = containerRef.current
     if (!cellEl || !containerEl) return
 
-    window.scrollTo({ top: 0, behavior: 'instant' })
+    containerEl.scrollTop = 0
 
     const current   = canvasTransformRef.current
     const cell      = cellEl.getBoundingClientRect()
