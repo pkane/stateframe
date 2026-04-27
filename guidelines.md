@@ -1,5 +1,4 @@
 # Project Guidelines — Stateframe
-### Vercel Design Engineer Take-Home
 
 ---
 
@@ -236,34 +235,6 @@ Exception: **Level 3 detail view** — here the component is fully live and inte
 9. Build pinned rail + split view
 10. Breadcrumb + Escape key navigation
 11. Polish pass — easing refinement, spacing, typography, empty/loading states
-
----
-
-## Time Budget (~12 hours)
-
-| Task | Time |
-|---|---|
-| Setup + architecture | 1h |
-| UI components + forced states | 2h |
-| Overview grid (static) | 1.5h |
-| Zoom state management | 1h |
-| Level 2 — expansion + toolbar | 2.5h |
-| Level 3 — detail + code drawer | 1.5h |
-| Pinned rail + split view | 2h |
-| Breadcrumb + Escape nav | 0.5h |
-| Polish pass | 1h |
-| **Total** | **~13h** |
-
----
-
-## Write-up Notes (document as you go)
-
-Key decisions to articulate:
-- **Film strip vs. playground** — states are frozen renders, not triggered interactions. Deliberate.
-- **Progressive disclosure as complexity budget** — each zoom level earns the right to show more
-- **No sidebar** — the canvas is the navigation. Absence of sidebar is a design statement.
-- **Variants at overview, states at Level 2** — clean separation of hierarchy
-- **How it ships** — production version would accept a declarative config file pointing at a team's own component library. Hardcoded set is intentional for prototype scope.
 
 ---
 
