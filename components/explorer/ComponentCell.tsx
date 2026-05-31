@@ -2,8 +2,16 @@
 
 import { forwardRef, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-import type { ComponentVariant } from '@/lib/types'
+import type { ComponentVariant, ComponentState } from '@/lib/types'
 
+function stateDotColor(state: ComponentState): string {
+  if (state.forcedClassName === '') return '#3b82f6'
+  if (state.category === 'validation') return '#ef4444'
+  if (state.category === 'disabled' || state.category === 'loading') return '#525252'
+  const lbl = state.label.toLowerCase()
+  if (lbl === 'focus' || lbl === 'checked' || lbl === 'filled' || lbl === 'open') return '#22c55e'
+  return '#525252'
+}
 
 type ComponentCellProps = {
   variant: ComponentVariant
@@ -14,14 +22,13 @@ type ComponentCellProps = {
 }
 
 export const ComponentCell = forwardRef<HTMLDivElement, ComponentCellProps>(
-  function ComponentCell({ variant, onClick, targetOpacity = 1, zoomLevel, entranceDelay = 0 }, ref) {
+  function ComponentCell({ variant, onClick, targetOpacity = 1, entranceDelay = 0 }, ref) {
     const Component = variant.component
     const props = variant.defaultProps ?? {}
 
     const hasEntered = useRef(false)
     useEffect(() => { hasEntered.current = true }, [])
 
-    const hoverTranslateClass = zoomLevel === 'overview' ? 'lg:group-hover:-translate-y-5' : 'lg:group-hover:-translate-y-[30px]'
     return (
       <motion.div
         ref={ref}
@@ -29,36 +36,50 @@ export const ComponentCell = forwardRef<HTMLDivElement, ComponentCellProps>(
         tabIndex={targetOpacity >= 0.5 ? 0 : -1}
         onClick={onClick}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClick?.() }}
-        className="group flex flex-col items-center gap-4 cursor-pointer outline-none w-fit"
+        className="group cursor-pointer outline-none w-fit"
         aria-label={`Explore ${variant.label} states`}
         initial={{ opacity: 0 }}
         animate={{ opacity: targetOpacity }}
         whileHover={targetOpacity > 0 && targetOpacity < 1 ? { opacity: 1 } : undefined}
         transition={{ opacity: { duration: 0.4, delay: hasEntered.current ? 0 : entranceDelay } }}
       >
-        <div className="relative flex w-36 md:w-52 h-32 items-center justify-center">
-          <div
-            className="absolute inset-0 rounded-full transition-transform duration-500 ease-out pointer-events-none"
-          />
-          {/* Hover/focus glow — wider radius, brighter, fades in */}
-          <div
-            className="absolute -inset-5 rounded-full opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-500 ease-out pointer-events-none"
-            style={{ background: 'radial-gradient(circle, #ebebeb 0%, transparent 65%)', transform: 'scale(1.3)' }}
-          />
+        <div
+          className="relative flex flex-col w-36 md:w-52 rounded-xl overflow-hidden bg-white/60 hover:bg-white ring-1 ring-neutral-300"
+        >
+          {/* Hover tint */}
+          <div className="absolute inset-0 bg-white/0 group-hover:bg-white/[0.03] transition-colors duration-300 pointer-events-none z-10" />
 
           {/* Focus ring */}
-          <div className="absolute inset-4 rounded-md opacity-0 group-focus-visible:opacity-100 ring-2 ring-neutral-400 ring-offset-2 ring-offset-[#fafafa]" />
+          <div className="absolute inset-0 rounded-xl opacity-0 group-focus-visible:opacity-100 ring-2 ring-inset ring-neutral-500 pointer-events-none z-10" />
 
-          {/* Component preview — inert prevents internal elements from receiving tab focus */}
-          <div className="relative pointer-events-none scale-[0.78] origin-center" aria-hidden inert>
-            <Component {...props} />
+          {/* Preview area */}
+          <div className="flex h-32 items-center justify-center">
+            <div className="relative pointer-events-none scale-[0.78] origin-center" aria-hidden inert>
+              <Component {...props} />
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-grey" />
+
+          {/* Label + state dots */}
+          <div className="px-3 pt-2.5 pb-3 flex flex-col gap-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400 group-hover:text-neutral-300 transition-colors duration-200">
+              {variant.label}
+            </span>
+            <div className="flex flex-wrap gap-x-2.5 gap-y-1">
+              {variant.states.map(state => (
+                <div key={state.id} className="flex items-center gap-1">
+                  <div
+                    className="w-1.5 h-1.5 rounded-full shrink-0"
+                    style={{ background: stateDotColor(state) }}
+                  />
+                  <span className="text-[9px] text-neutral-600 leading-none">{state.label}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-
-        {/* Label */}
-        <span className={`text-xs text-neutral-400 font-medium tracking-wide lg:opacity-0 -translate-y-8 lg:-translate-y-12 lg:group-hover:opacity-100 ${hoverTranslateClass} group-hover:text-neutral-600 group-focus-visible:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:text-neutral-600 transition-all duration-300 ease-out`}>
-          {variant.label}
-        </span>
       </motion.div>
     )
   }

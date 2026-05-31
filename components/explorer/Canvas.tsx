@@ -21,6 +21,8 @@ type CanvasTransform = { scale: number; x: number; y: number }
 
 const IDENTITY: CanvasTransform = { scale: 1, x: 0, y: 0 }
 
+const GROUP_OFFSET_PX: Record<string, number> = { 'form-inputs': 28 }
+
 // Computes x/y/scale so the given cell is centered in the container.
 // Uses transformOrigin '0 0': natural point (nx,ny) → visual (nx*s + tx, ny*s + ty).
 // getBoundingClientRect() returns the visual (post-transform) position, so we
@@ -410,7 +412,9 @@ function CanvasInner() {
           aria-label="Component overview"
         >
           <div className="flex flex-col gap-12 md:gap-16">
-            {componentRegistry.map((group, groupIndex) => (
+            {componentRegistry.map((group, groupIndex) => {
+              const groupOffsetPx = zoomLevel === 'overview' ? (GROUP_OFFSET_PX[group.id] ?? 0) : 0
+              return (
               <section key={group.id} aria-labelledby={`group-${group.id}`}>
                 <div className="flex items-center justify-between mb-5 px-10">
                   <motion.h2
@@ -425,7 +429,7 @@ function CanvasInner() {
 
                   <div className={cn('flex gap-0.5 transition-opacity duration-300', zoomLevel !== 'overview' && 'opacity-0 pointer-events-none')}>
                     {(['left', 'right'] as const).map((dir) => {
-                      const rowWidth   = Math.min(viewportWidth, 1024) - 80
+                      const rowWidth   = Math.min(viewportWidth, 1024) - 80 - groupOffsetPx
                       const totalWidth = group.variants.length * 208 + (group.variants.length - 1) * 16
                       const scrolled   = groupScrollX[group.id] ?? 0
                       const visible    = dir === 'left'
@@ -455,7 +459,7 @@ function CanvasInner() {
                   </div>
                 </div>
 
-                <div style={zoomLevel === 'overview' ? { overflowX: 'clip' } : undefined}>
+                <div style={zoomLevel === 'overview' ? { overflowX: 'clip', paddingLeft: groupOffsetPx } : undefined}>
                 <div
                   className="flex gap-4"
                   style={{
@@ -509,7 +513,8 @@ function CanvasInner() {
                 </div>
                 </div>
               </section>
-            ))}
+              )
+            })}
           </div>
         </main>
 
