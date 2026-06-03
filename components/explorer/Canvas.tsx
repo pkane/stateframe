@@ -21,7 +21,12 @@ type CanvasTransform = { scale: number; x: number; y: number }
 
 const IDENTITY: CanvasTransform = { scale: 1, x: 0, y: 0 }
 
-const GROUP_OFFSET_PX: Record<string, number> = { 'form-inputs': 28 }
+const GROUP_OFFSET_PX: Record<string, number> = {
+  'buttons':     0,
+  'form-inputs': 28,
+  'feedback':    12,
+  'navigation':  20,
+}
 
 // Computes x/y/scale so the given cell is centered in the container.
 // Uses transformOrigin '0 0': natural point (nx,ny) → visual (nx*s + tx, ny*s + ty).
@@ -461,7 +466,7 @@ function CanvasInner() {
 
                 <div style={zoomLevel === 'overview' ? { overflowX: 'clip', paddingLeft: groupOffsetPx } : undefined}>
                 <div
-                  className="flex gap-4"
+                  className="flex gap-4 px-10"
                   style={{
                     transform: `translateX(-${groupScrollX[group.id] ?? 0}px)`,
                     transition: `transform 0.4s cubic-bezier(${ZOOM_EASING.join(',')})`,
