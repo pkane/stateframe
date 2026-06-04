@@ -28,6 +28,17 @@ const GROUP_OFFSET_PX: Record<string, number> = {
   'navigation':  20,
 }
 
+// Centers a known natural-coordinate point in the container at targetScale.
+function centerNaturalPoint(
+  naturalCx: number,
+  naturalCy: number,
+  containerEl: HTMLElement,
+  targetScale: number,
+): CanvasTransform {
+  const c = containerEl.getBoundingClientRect()
+  return { scale: targetScale, x: c.width / 2 - naturalCx * targetScale, y: c.height / 2 - naturalCy * targetScale }
+}
+
 // Computes x/y/scale so the given cell is centered in the container.
 // Uses transformOrigin '0 0': natural point (nx,ny) → visual (nx*s + tx, ny*s + ty).
 // getBoundingClientRect() returns the visual (post-transform) position, so we
@@ -264,6 +275,14 @@ function CanvasInner() {
 
   const [activeCellNaturalPos, setActiveCellNaturalPos] = useState<{ cx: number; cy: number } | null>(null)
 
+  // Mirror latest values into refs so zoomToComponent never reads stale closures
+  const activeVariantRef          = useRef<string | null>(null)
+  activeVariantRef.current        = activeVariant
+  const zoomLevelRef              = useRef(zoomLevel)
+  zoomLevelRef.current            = zoomLevel
+  const activeCellNaturalPosRef   = useRef<{ cx: number; cy: number } | null>(null)
+  activeCellNaturalPosRef.current = activeCellNaturalPos
+
   const canGoBack = zoomLevel !== 'overview' || splitView
 
   // Reset camera when returning to overview
@@ -296,15 +315,36 @@ function CanvasInner() {
 
     containerEl.scrollTop = 0
 
+    const prevId    = activeVariantRef.current
+    const cachedPos = activeCellNaturalPosRef.current
+
+    // When navigating between siblings in the same group while already at level 2,
+    // compute the target position analytically — measuring from the DOM here would
+    // read mid-animation coordinates and land the state grid in the wrong place.
+    if (zoomLevelRef.current === 'component' && prevId && cachedPos) {
+      const prevGroup = componentRegistry.find(g => g.variants.some(v => v.id === prevId))
+      const nextGroup = componentRegistry.find(g => g.variants.some(v => v.id === variantId))
+      if (prevGroup && nextGroup && prevGroup.id === nextGroup.id) {
+        const prevIdx   = prevGroup.variants.findIndex(v => v.id === prevId)
+        const nextIdx   = prevGroup.variants.findIndex(v => v.id === variantId)
+        const cellW     = window.innerWidth < 768 ? 144 : 208
+        const naturalCx = cachedPos.cx + (nextIdx - prevIdx) * (cellW + 16)
+        const naturalCy = cachedPos.cy
+        setActiveCellNaturalPos({ cx: naturalCx, cy: naturalCy })
+        setCanvasTransform(centerNaturalPoint(naturalCx, naturalCy, containerEl, zoomScale))
+        dispatch({ type: 'ZOOM_TO_COMPONENT', variantId })
+        return
+      }
+    }
+
+    // Default path: first zoom-in from overview, or cross-group navigation
     const current   = canvasTransformRef.current
     const cell      = cellEl.getBoundingClientRect()
     const container = containerEl.getBoundingClientRect()
-
-    const visualCx = cell.left - container.left + cell.width  / 2
-    const visualCy = cell.top  - container.top  + cell.height / 2
+    const visualCx  = cell.left - container.left + cell.width  / 2
+    const visualCy  = cell.top  - container.top  + cell.height / 2
     const naturalCx = (visualCx - current.x) / current.scale
     const naturalCy = (visualCy - current.y) / current.scale
-
     setActiveCellNaturalPos({ cx: naturalCx, cy: naturalCy })
     setCanvasTransform(centerCell(cellEl, containerEl, zoomScale, current))
     dispatch({ type: 'ZOOM_TO_COMPONENT', variantId })
@@ -364,6 +404,7 @@ function CanvasInner() {
   const activeGroup        = activeVariant  ? componentRegistry.find(g => g.variants.some(v => v.id === activeVariant)) ?? null : null
   const activeGroupId      = activeGroup?.id ?? null
   const activeStateData    = activeState && activeVariantData ? activeVariantData.states.find(s => s.id === activeState) ?? null : null
+  const visibleStateCount  = activeVariantData ? activeVariantData.states.filter(s => !hiddenStates.includes(s.id)).length : 0
 
   // Split view data
   const splitPin         = splitView ? (pinnedStates[splitViewIndex] ?? null) : null
@@ -483,7 +524,20 @@ function CanvasInner() {
                       zoomLevel !== 'component' ? 1 :
                       isActive ? 0 : 0.5
 
-                    const baseShift = Math.round(30 / zoomScale)
+                    const cellWidthPx = viewportWidth < 768 ? 144 : 208
+                    const stateCellW  = density === 'compact' ? (viewportWidth < 768 ? 128 : 144) : 168
+                    const stateContW  = viewportWidth < 768
+                      ? Math.round(viewportWidth * 0.85 / zoomScale)
+                      : viewportWidth < 1024
+                      ? Math.round(viewportWidth * 0.75 / zoomScale)
+                      : 400
+                    const cellsPerRow = Math.max(1, Math.floor((stateContW + 12) / (stateCellW + 12)))
+                    const activeCols  = Math.min(cellsPerRow, Math.max(1, visibleStateCount))
+                    const stateRowW   = activeCols * stateCellW + (activeCols - 1) * 12
+                    const baseShift   = Math.max(
+                      Math.round(30 / zoomScale),
+                      Math.ceil(stateRowW / 2 - 16 - cellWidthPx / 2 + 16),
+                    )
                     const distance  = Math.abs(variantIndex - activeIdxInGrp)
                     const translateX =
                       isActiveGroup && !isActive

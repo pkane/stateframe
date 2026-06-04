@@ -44,7 +44,7 @@ export const ComponentCell = forwardRef<HTMLDivElement, ComponentCellProps>(
         transition={{ opacity: { duration: 0.4, delay: hasEntered.current ? 0 : entranceDelay } }}
       >
         <div
-          className="relative flex flex-col w-36 md:w-52 rounded-xl overflow-hidden bg-white/60 hover:bg-white ring-1 ring-neutral-300"
+          className="relative flex flex-col w-36 md:w-52 rounded-xl overflow-hidden bg-white/60 hover:bg-white ring-1 ring-neutral-300 hover:ring-neutral-400"
         >
           {/* Hover tint */}
           <div className="absolute inset-0 bg-white/0 group-hover:bg-white/[0.03] transition-colors duration-300 pointer-events-none z-10" />
