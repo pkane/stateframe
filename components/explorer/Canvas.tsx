@@ -21,13 +21,6 @@ type CanvasTransform = { scale: number; x: number; y: number }
 
 const IDENTITY: CanvasTransform = { scale: 1, x: 0, y: 0 }
 
-const GROUP_OFFSET_PX: Record<string, number> = {
-  'buttons':     0,
-  'form-inputs': 28,
-  'feedback':    12,
-  'navigation':  20,
-}
-
 // Centers a known natural-coordinate point in the container at targetScale.
 function centerNaturalPoint(
   naturalCx: number,
@@ -98,7 +91,7 @@ function StateDetailOverlay({
 
   return (
     <motion.div
-      className={cn('fixed inset-0 z-30 flex flex-col items-center bg-[#fafafa] md:justify-center md:mb-0', splitTotal > 0 ? 'justify-end mb-[10vh]' : 'justify-center')}
+      className={cn('fixed inset-0 z-30 flex flex-col items-center bg-[#ebebeb] md:justify-center md:mb-0', splitTotal > 0 ? 'justify-end mb-[10vh]' : 'justify-center')}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -435,7 +428,10 @@ function CanvasInner() {
   return (
     <div
       ref={containerRef}
-      className={cn('relative h-full w-full overflow-x-hidden bg-[#fafafa]', zoomLevel !== 'overview' && 'overflow-y-hidden' )}
+      className={cn('relative h-full w-full overflow-x-hidden bg-[#ebebeb] transition-colors duration-300 ease-in-out', 
+        zoomLevel == 'overview' && '!bg-[#fafafa]',
+        zoomLevel !== 'overview' && 'overflow-y-hidden' 
+      )}
     >
       <Breadcrumb
         variant={activeVariantLabel}
@@ -458,10 +454,12 @@ function CanvasInner() {
           aria-label="Component overview"
         >
           <div className="flex flex-col gap-12 md:gap-16">
-            {componentRegistry.map((group, groupIndex) => {
-              const groupOffsetPx = zoomLevel === 'overview' ? (GROUP_OFFSET_PX[group.id] ?? 0) : 0
-              return (
-              <section key={group.id} aria-labelledby={`group-${group.id}`}>
+            {componentRegistry.map((group, groupIndex) => (
+              <section
+                key={group.id}
+                aria-labelledby={`group-${group.id}`}
+                className="border-y-[1px] lg:border-l-[1px] lg:border-r-[1px] md:border-neutral-300 lg:rounded-xl pt-8 pb-10"
+              >
                 <div className="flex items-center justify-between mb-5 px-10">
                   <motion.h2
                     id={`group-${group.id}`}
@@ -475,7 +473,7 @@ function CanvasInner() {
 
                   <div className={cn('flex gap-0.5 transition-opacity duration-300', zoomLevel !== 'overview' && 'opacity-0 pointer-events-none')}>
                     {(['left', 'right'] as const).map((dir) => {
-                      const rowWidth   = Math.min(viewportWidth, 1024) - 80 - groupOffsetPx
+                      const rowWidth   = Math.min(viewportWidth, 1024) - 80
                       const totalWidth = group.variants.length * 208 + (group.variants.length - 1) * 16
                       const scrolled   = groupScrollX[group.id] ?? 0
                       const visible    = dir === 'left'
@@ -505,7 +503,6 @@ function CanvasInner() {
                   </div>
                 </div>
 
-                <div style={zoomLevel === 'overview' ? { overflowX: 'clip', paddingLeft: groupOffsetPx } : undefined}>
                 <div
                   className="flex gap-4 px-10"
                   style={{
@@ -549,6 +546,7 @@ function CanvasInner() {
                     return (
                     <motion.div
                       key={variant.id}
+                      className='flex'
                       initial={{ y: 10, x: 0 }}
                       animate={{ y: 0, x: translateX }}
                       transition={{
@@ -570,10 +568,8 @@ function CanvasInner() {
                     </motion.div>
                   )})}
                 </div>
-                </div>
               </section>
-              )
-            })}
+            ))}
           </div>
         </main>
 
@@ -629,7 +625,7 @@ function CanvasInner() {
       <AnimatePresence>
         {zoomLevel !== 'overview' && (
           <motion.ul
-            className="fixed invisible lg:visible top-[68px] left-8 z-50 flex flex-col gap-1 list-none"
+            className="fixed invisible lg:visible top-[86px] left-8 z-50 flex flex-col gap-1 list-none"
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}

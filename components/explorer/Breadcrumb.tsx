@@ -26,7 +26,7 @@ export function Breadcrumb({ variant, state, onNavigateHome, onNavigateVariant }
 
   return (
     <nav
-      className="fixed top-0 md:top-6 z-50 w-full flex items-center gap-1.5 px-8 py-4 md:py-0 text-sm bg-white md:bg-transparent border-b border-neutral-200 md:border-none"
+      className="fixed top-0 z-50 w-full flex items-center gap-1.5 px-8 py-4 text-sm bg-white border-b border-neutral-200"
       aria-label="Explorer navigation"
     >
       <div className="relative inline-flex">

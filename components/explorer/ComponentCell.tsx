@@ -36,7 +36,7 @@ export const ComponentCell = forwardRef<HTMLDivElement, ComponentCellProps>(
         tabIndex={targetOpacity >= 0.5 ? 0 : -1}
         onClick={onClick}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClick?.() }}
-        className="group cursor-pointer outline-none w-fit"
+        className="group flex flex-1 cursor-pointer outline-none w-fit"
         aria-label={`Explore ${variant.label} states`}
         initial={{ opacity: 0 }}
         animate={{ opacity: targetOpacity }}
